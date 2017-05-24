@@ -1,0 +1,15 @@
+#!/bin/sh
+
+#export GDK_DPI_SCALE=1.5
+
+xkbcomp $DISPLAY /tmp/kbconf.xkb
+sed -i 's/!allowExplicit/allowExplicit/g' /tmp/kbconf.xkb
+xkbcomp /tmp/kbconf.xkb $DISPLAY > /dev/null 2>&1
+rm /tmp/kbconf.xkb
+
+xmodmap ~/.Xmodmap
+xrdb ~/.Xresources
+xset -r 66
+xset -led 1
+
+#syndaemon -i 0.5 -d -K -R &

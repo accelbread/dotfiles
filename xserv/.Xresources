@@ -1,0 +1,18 @@
+Xft.dpi:144
+
+URxvt*scrollTtyOutput: false
+URxvt*scrollWithBuffer: true
+URxvt*scrollTtyKeypress: true
+URxvt.secondaryScreen: 1
+URxvt.secondaryScroll: 0
+URxvt.secondaryWheel: 1
+URxvt.font: xft:monospace:size=9
+URxvt.letterSpace: -1
+URxvt.color12: rgb:5c/5c/ff
+URxvt.scrollStyle: plain
+URxvt.scrollBar_right: true
+
+URxvt.scrollColor: #808080
+URxvt.background: 0
+URxvt.foreground: 7
+
