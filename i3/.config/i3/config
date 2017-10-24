@@ -10,6 +10,7 @@ exec --no-startup-id pactl set-sink-mute 0 1
 exec --no-startup-id redshift
 exec --no-startup-id dunst
 exec --no-startup-id nm-applet
+exec --no-startup-id syndaemon -t -K -i 1.5 -d
 exec --no-startup-id xautolock -detectsleep -notify 60 -notifier "xset dpms force off" -time 10 -locker "systemctl suspend"
 
 for_window [title="Volume Control"] floating enable
