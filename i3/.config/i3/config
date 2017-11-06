@@ -1,81 +1,98 @@
-set $mod Mod1
-set $mode_switch F13
+set $mod mod4
+set $mode_key Mod1+Escape 
+set $mode_default i3-msg mode default && xset -led 1
+set $mode_command i3-msg mode command && xset led 1
+set $exec exec --no-startup-id
 
 font pango:DejaVu Sans 8
-floating_modifier $mod
+floating_maximum_size 2450 x 1300
+hide_edge_borders both
 focus_follows_mouse no
 mouse_warping none
+force_focus_wrapping yes
+workspace_auto_back_and_forth yes
+force_display_urgency_hint 500 ms
+focus_on_window_activation urgent
 
-exec --no-startup-id pactl set-sink-mute 0 1
-exec --no-startup-id redshift
-exec --no-startup-id dunst
-exec --no-startup-id nm-applet
-exec --no-startup-id syndaemon -t -K -i 1.5 -d
-exec --no-startup-id xautolock -detectsleep -notify 60 -notifier "xset dpms force off" -time 10 -locker "systemctl suspend"
+exec_always --no-startup-id "i3-msg mode default && xset -led 1"
+$exec pactl set-sink-mute "alsa_output.pci-0000_00_1f.3.analog-stereo" 1
+$exec redshift
+$exec dunst
+$exec nm-applet
+$exec xautolock -detectsleep -notify 60 -notifier "xset dpms force off" -time 10 -locker "systemctl suspend"
 
 for_window [title="Volume Control"] floating enable
 
 bar {
     status_command i3status
 	position top
+    font pango:Nono Emoji 8
 }
 
-bindsym XF86MonBrightnessDown exec xbacklight -dec 1
-bindsym XF86MonBrightnessUp exec xbacklight -inc 1
-bindsym XF86AudioMute exec pactl set-sink-mute 0 toggle
-bindsym XF86AudioLowerVolume exec pactl set-sink-volume 0 -2%
-bindsym XF86AudioRaiseVolume exec pactl set-sink-volume 0 +2%
 
-bindsym Mod1+Tab workspace next
+floating_modifier Mod1
+
+bindsym XF86MonBrightnessDown $exec xbacklight -dec 1
+bindsym XF86MonBrightnessUp   $exec xbacklight -inc 1
+bindsym XF86AudioMute         $exec pactl set-sink-mute 0 toggle
+bindsym XF86AudioLowerVolume  $exec pactl set-sink-volume 0 -2%
+bindsym XF86AudioRaiseVolume  $exec pactl set-sink-volume 0 +2%
+
+bindsym Mod1+Tab       workspace next
 bindsym Mod1+Shift+Tab workspace prev
 
-bindsym $mode_switch exec "i3-msg mode command && xset led 1" 
+bindsym $mode_key $exec "$mode_command"
 
 mode "command" {
-    bindsym $mode_switch exec "i3-msg mode default && xset -led 1"
-    bindsym Escape exec "i3-msg mode default && xset -led 1"
+    bindsym $mode_key $exec "$mode_default"
+    bindsym Escape    $exec "$mode_default"
     
-    bindsym Return exec urxvt
-    bindsym c exec chromium
-    bindsym v exec pavucontrol
-    bindsym d exec "i3-dmenu-desktop --dmenu=\\"dmenu -i -fn \\\\"DejaVu Sans-9\\\\" -nb \\#000000 -sb \\#808080 -nf \\#c0c0c0 -sf \\#ffffff\\" --entry-type=filename"
+    bindsym Return      $exec urxvt
+    bindsym colon       $exec rofi -show drun
+    bindsym shift+colon $exec rofi -show run
+    bindsym b           $exec qutebrowser
+    bindsym shift+b     $exec chromium
+    bindsym v           $exec pavucontrol
 
-    bindsym XF86MonBrightnessDown exec xbacklight -dec 1
-    bindsym XF86MonBrightnessUp exec xbacklight -inc 1
-    bindsym XF86AudioMute exec pactl set-sink-mute 0 toggle
-    bindsym XF86AudioLowerVolume exec pactl set-sink-volume 0 -2%
-    bindsym XF86AudioRaiseVolume exec pactl set-sink-volume 0 +2%
+    bindsym XF86MonBrightnessDown $exec xbacklight -dec 1
+    bindsym XF86MonBrightnessUp   $exec xbacklight -inc 1
+    bindsym XF86AudioMute         $exec pactl set-sink-mute 0 toggle
+    bindsym XF86AudioLowerVolume  $exec pactl set-sink-volume 0 -2%
+    bindsym XF86AudioRaiseVolume  $exec pactl set-sink-volume 0 +2%
 
-    bindsym t exec synclient TouchpadOff=1
-    bindsym Shift+t exec synclient TouchpadOff=0
+    bindsym t       $exec synclient TouchpadOff=0
+    bindsym shift+t $exec synclient TouchpadOff=1
     
-    bindsym l exec pkill -USR1 redshift
+    bindsym Shift+' $exec pkill -USR1 redshift
     
     bindsym q kill
 
     bindsym Mod1+c reload
     bindsym Mod1+r restart
-    bindsym Mod1+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
-    bindsym Mod1+q exec systemctl poweroff
+    bindsym Mod1+e exit
+    bindsym Mod1+q $exec systemctl poweroff
 
     bindsym w split h
     bindsym e split v
 
     bindsym Shift+e layout stacking
     bindsym Shift+w layout tabbed
-    bindsym Shift+d layout toggle split
+    bindsym Shift+r layout toggle split
 
-    bindsym Shift+a focus parent
-    bindsym Shift+s focus child
+    bindsym f       focus parent
+    bindsym Shift+f focus child
 
-    bindsym f fullscreen toggle
+    bindsym '           fullscreen toggle
     bindsym Shift+space floating toggle
-    bindsym space focus mode_toggle
+    bindsym space       focus mode_toggle
 
-    bindsym Tab workspace next
-    bindsym Shift+Tab workspace prev
-    bindsym Mod1+Tab workspace next
+    bindsym Tab            workspace next
+    bindsym Shift+Tab      workspace prev
+    bindsym Mod1+Tab       workspace next
     bindsym Mod1+Shift+Tab workspace prev
+    
+    bindsym s       scratchpad show
+    bindsym Shift+s move scratchpad
 
     bindsym 1 workspace 1
     bindsym 2 workspace 2
@@ -87,6 +104,7 @@ mode "command" {
     bindsym 8 workspace 8
     bindsym 9 workspace 9
     bindsym 0 workspace 10
+
     bindsym Shift+1 move container to workspace 1
     bindsym Shift+2 move container to workspace 2
     bindsym Shift+3 move container to workspace 3
@@ -98,19 +116,35 @@ mode "command" {
     bindsym Shift+9 move container to workspace 9
     bindsym Shift+0 move container to workspace 10
 
-    bindsym Mod1+Left resize shrink width 5 px or 5 ppt
-    bindsym Mod1+Down resize grow height 5 px or 5 ppt
-    bindsym Mod1+Up resize shrink height 5 px or 5 ppt
-    bindsym Mod1+Right resize grow width 5 px or 5 ppt
+    bindsym Mod1+h resize shrink width 10 px or 5 ppt
+    bindsym Mod1+j resize grow height 10 px or 5 ppt
+    bindsym Mod1+k resize shrink height 10 px or 5 ppt
+    bindsym Mod1+l resize grow width 10 px or 5 ppt
 
-    bindsym Left focus left
-    bindsym Down focus down
-    bindsym Up focus up
+    bindsym Mod1+Left  resize shrink width 10 px or 5 ppt
+    bindsym Mod1+Down  resize grow height 10 px or 5 ppt
+    bindsym Mod1+Up    resize shrink height 10 px or 5 ppt
+    bindsym Mod1+Right resize grow width 10 px or 5 ppt
+
+    bindsym h focus left
+    bindsym j focus down
+    bindsym k focus up
+    bindsym l focus right
+
+    bindsym Left  focus left
+    bindsym Down  focus down
+    bindsym Up    focus up
     bindsym Right focus right
 
-    bindsym Shift+Left move left
-    bindsym Shift+Down move down
-    bindsym Shift+Up move up
+    bindsym Shift+h move left
+    bindsym Shift+j move down
+    bindsym Shift+k move up
+    bindsym Shift+l move right
+
+    bindsym Shift+Left  move left
+    bindsym Shift+Down  move down
+    bindsym Shift+Up    move up
     bindsym Shift+Right move right
 
 }
+
