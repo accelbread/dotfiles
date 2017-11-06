@@ -1,3 +1,4 @@
+# Set $LS_COLORS
 dircolors -b | source /dev/stdin
 
 # Lines configured by zsh-newuser-install
@@ -20,21 +21,63 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
-PROMPT='%B%F{9}%(?..%? )%b%(!..%f%F{6})%1/>%f '
+export EDITOR=vim
 
-alias grep='grep --color=auto'
-alias ls='ls --color=auto'
-alias diff='diff --color=auto'
+# zsh-git-prompt 
+source /usr/lib/zsh-git-prompt/zshrc.sh
+ZSH_THEME_GIT_PROMPT_PREFIX="["
+ZSH_THEME_GIT_PROMPT_SUFFIX="] "
+reset_color="\e[0;36m"
 
-preexec(){
-    print -Pn "\e]0;[%n@%m] $1\a"
+# prompt
+modecolor=6
+PROMPT='%F{6}$(git_super_status)%(?..%B%F{1}%? %b%f)%F{$modecolor}%1/❭ %f'
+
+zle-keymap-select() {
+  case "$KEYMAP" in
+    "vicmd") modecolor=5;;
+    *)       modecolor=6;;
+  esac
+  zle reset-prompt
 }
+zle -N zle-keymap-select
+
+# Stay in previous mode
+accept-line() { 
+  prev_mode=$KEYMAP
+  zle .accept-line
+}
+zle-line-init() {
+  zle -K ${prev_mode:-viins}
+}
+zle -N accept-line
+zle -N zle-line-init
+
+# Lower delay in switching vi mode
+export KEYTIMEOUT=1
+
+# Set window title
 precmd(){
     print -Pn "\e]0;[%n@%m] zsh: %~\a"
 }
+preexec(){
+    print -Pn "\e]0;[%n@%m] $1\a"
+}
 
-export EDITOR=vim
-
+# Traverse history matching part of line left of cursor
 bindkey "^[[A" history-beginning-search-backward
 bindkey "^[[B" history-beginning-search-forward
+bindkey -a "k" history-beginning-search-backward
+bindkey -a 'j' history-beginning-search-forward
+
+# Vi mode: allow delete before position insert mode entered in
+bindkey "^?" backward-delete-char
+bindkey "^W" backward-kill-word
+bindkey "^H" backward-delete-char
+bindkey "^U" backward-kill-line
+
+# Set tools to use colors
+alias grep='grep --color=auto'
+alias ls='ls --color=auto'
+alias diff='diff --color=auto'
 
