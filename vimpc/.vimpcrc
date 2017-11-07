@@ -1,0 +1,20 @@
+set window playlist
+set windows playlist,library
+set hlsearch
+set ignorecase
+set incsearch
+set mouse
+set reconnect
+set noplaylistnumbers
+set seekbar
+set singlequit
+set smartcase
+set sortignorecase
+hi tab cyanfg
+hi progress cyanfg
+hi status magentafg
+hi current magentafg
+hi partial yellowfg
+hi full cyanfg
+connect /home/fate/.config/mpd/socket
+
