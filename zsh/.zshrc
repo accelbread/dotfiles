@@ -22,35 +22,39 @@ compinit
 # End of lines added by compinstall
 
 export EDITOR=vim
+export MPD_HOST="$HOME/.config/mpd/socket"
 
 # zsh-git-prompt 
 source /usr/lib/zsh-git-prompt/zshrc.sh
 ZSH_THEME_GIT_PROMPT_PREFIX="["
 ZSH_THEME_GIT_PROMPT_SUFFIX="] "
+ZSH_THEME_GIT_PROMPT_CHANGED="%F{12}%{✚%G%}"
 reset_color="\e[0;36m"
 
 # prompt
-modecolor=6
-PROMPT='%F{6}$(git_super_status)%(?..%B%F{1}%? %b%f)%F{$modecolor}%1/❭ %f'
+mode_color=0
+PROMPT='%F{6}$(git_super_status)%(?..%B%F{1}%? %b%f)%F{$mode_color}%1/❭ %f'
 
 zle-keymap-select() {
   case "$KEYMAP" in
-    "vicmd") modecolor=5;;
-    *)       modecolor=6;;
+    vicmd) 
+        mode_color=5;;
+    viins|main)
+        mode_color=6;;
   esac
   zle reset-prompt
 }
 zle -N zle-keymap-select
 
 # Stay in previous mode
-accept-line() { 
+zle-line-finish() { 
   prev_mode=$KEYMAP
-  zle .accept-line
 }
 zle-line-init() {
-  zle -K ${prev_mode:-viins}
+  zle -K ${prev_mode:-main}
+  zle-keymap-select
 }
-zle -N accept-line
+zle -N zle-line-finish
 zle -N zle-line-init
 
 # Lower delay in switching vi mode
