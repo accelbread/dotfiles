@@ -44,6 +44,8 @@ bindsym $mode_key $exec "$mode_command"
 mode "command" {
     bindsym $mode_key $exec "$mode_default"
     bindsym Escape    $exec "$mode_default"
+
+    bindsym r mode "resize"
     
     bindsym Return      exec urxvt
     bindsym colon       exec rofi -show drun
@@ -114,16 +116,6 @@ mode "command" {
     bindsym Shift+9 move container to workspace 9
     bindsym Shift+0 move container to workspace 10
 
-    bindsym Mod1+h resize shrink width 10 px or 5 ppt
-    bindsym Mod1+j resize grow height 10 px or 5 ppt
-    bindsym Mod1+k resize shrink height 10 px or 5 ppt
-    bindsym Mod1+l resize grow width 10 px or 5 ppt
-
-    bindsym Mod1+Left  resize shrink width 10 px or 5 ppt
-    bindsym Mod1+Down  resize grow height 10 px or 5 ppt
-    bindsym Mod1+Up    resize shrink height 10 px or 5 ppt
-    bindsym Mod1+Right resize grow width 10 px or 5 ppt
-
     bindsym h focus left
     bindsym j focus down
     bindsym k focus up
@@ -143,6 +135,20 @@ mode "command" {
     bindsym Shift+Down  move down
     bindsym Shift+Up    move up
     bindsym Shift+Right move right
-
 }
 
+mode "resize" {
+    bindsym $mode_key $exec "$mode_default"
+    bindsym Escape    mode "command"
+    bindsym r         mode "command"
+    
+    bindsym h resize shrink width 10 px or 5 ppt
+    bindsym j resize grow height 10 px or 5 ppt
+    bindsym k resize shrink height 10 px or 5 ppt
+    bindsym l resize grow width 10 px or 5 ppt
+
+    bindsym Left  resize shrink width 10 px or 5 ppt
+    bindsym Down  resize grow height 10 px or 5 ppt
+    bindsym Up    resize shrink height 10 px or 5 ppt
+    bindsym Right resize grow width 10 px or 5 ppt
+}
