@@ -10,11 +10,11 @@ hide_edge_borders both
 focus_follows_mouse no
 mouse_warping none
 force_focus_wrapping yes
-workspace_auto_back_and_forth yes
+workspace_auto_back_and_forth no
 force_display_urgency_hint 500 ms
 focus_on_window_activation urgent
 
-exec_always --no-startup-id "i3-msg mode default && xset -led 1"
+exec_always --no-startup-id "$mode_default"
 $exec pactl set-sink-mute "alsa_output.pci-0000_00_1f.3.analog-stereo" 1
 $exec redshift
 $exec dunst
@@ -26,9 +26,7 @@ for_window [title="Volume Control"] floating enable
 bar {
     status_command i3status
 	position top
-    font pango:Nono Emoji 8
 }
-
 
 floating_modifier Mod1
 
@@ -47,12 +45,12 @@ mode "command" {
     bindsym $mode_key $exec "$mode_default"
     bindsym Escape    $exec "$mode_default"
     
-    bindsym Return      $exec urxvt
-    bindsym colon       $exec rofi -show drun
-    bindsym shift+colon $exec rofi -show run
-    bindsym b           $exec qutebrowser
-    bindsym shift+b     $exec chromium
-    bindsym v           $exec pavucontrol
+    bindsym Return      exec urxvt
+    bindsym colon       exec rofi -show drun
+    bindsym shift+colon exec rofi -show run
+    bindsym b           exec qutebrowser
+    bindsym shift+b     exec chromium
+    bindsym v           exec pavucontrol
 
     bindsym XF86MonBrightnessDown $exec xbacklight -dec 1
     bindsym XF86MonBrightnessUp   $exec xbacklight -inc 1
@@ -63,7 +61,7 @@ mode "command" {
     bindsym t       $exec synclient TouchpadOff=0
     bindsym shift+t $exec synclient TouchpadOff=1
     
-    bindsym Shift+' $exec pkill -USR1 redshift
+    bindsym Shift+o $exec pkill -USR1 redshift
     
     bindsym q kill
 
@@ -79,10 +77,10 @@ mode "command" {
     bindsym Shift+w layout tabbed
     bindsym Shift+r layout toggle split
 
-    bindsym f       focus parent
-    bindsym Shift+f focus child
+    bindsym u       focus parent
+    bindsym Shift+u focus child
 
-    bindsym '           fullscreen toggle
+    bindsym f           fullscreen toggle
     bindsym Shift+space floating toggle
     bindsym space       focus mode_toggle
 
