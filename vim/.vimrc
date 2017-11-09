@@ -13,5 +13,5 @@ set expandtab
 set ai
 set si
 
-
+set visualbell
 
