@@ -21,6 +21,8 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
+setopt NO_BEEP
+
 export EDITOR=vim
 export MPD_HOST="$HOME/.config/mpd/socket"
 
