@@ -67,7 +67,8 @@ precmd(){
     print -Pn "\e]0;[%n@%m] zsh: %~\a"
 }
 preexec(){
-    print -Pn "\e]0;[%n@%m] $1\a"
+    print -Pn "\e]0;[%n@%m] "
+    print -n "$1\a"
 }
 
 # Traverse history matching part of line left of cursor
