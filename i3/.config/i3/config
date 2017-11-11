@@ -65,7 +65,7 @@ mode "command" {
     
     bindsym Shift+o $exec pkill -USR1 redshift
     
-    bindsym q kill
+    bindsym d kill
 
     bindsym Mod1+c reload
     bindsym Mod1+r restart
