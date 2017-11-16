@@ -8,6 +8,7 @@ URxvt.secondaryScroll: 0
 URxvt.secondaryWheel: 1
 URxvt.font: xft:monospace:size=9
 URxvt.letterSpace: -1
+URxvt.color4: rgb:00/5f/ff
 URxvt.color12: rgb:5c/5c/ff
 URxvt.scrollStyle: plain
 URxvt.scrollBar_right: true
