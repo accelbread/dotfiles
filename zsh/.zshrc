@@ -23,8 +23,11 @@ compinit
 
 setopt NO_BEEP
 
+export PATH="${PATH}:/home/fate/bin"
 export EDITOR=vim
 export MPD_HOST="$HOME/.config/mpd/socket"
+export RTV_URLVIEWER=urlscan
+export RTV_BROWSER="qutebrowser --target window"
 
 # zsh-git-prompt 
 source /usr/lib/zsh-git-prompt/zshrc.sh
@@ -70,12 +73,6 @@ preexec(){
     print -Pn "\e]0;[%n@%m] "
     print -n "$1\a"
 }
-
-# Traverse history matching part of line left of cursor
-bindkey "^[[A" history-beginning-search-backward
-bindkey "^[[B" history-beginning-search-forward
-bindkey -a "k" history-beginning-search-backward
-bindkey -a 'j' history-beginning-search-forward
 
 # Vi mode: allow delete before position insert mode entered in
 bindkey "^?" backward-delete-char
