@@ -15,7 +15,7 @@ zstyle ':completion:*' list-colors "${(@s.:.)LS_COLORS}"
 zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
 zstyle ':completion:*' menu select=1
 zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
-zstyle :compinstall filename '/home/fate/.zshrc'
+zstyle :compinstall filename "$HOME/.zshrc"
 
 autoload -Uz compinit
 compinit
@@ -23,7 +23,7 @@ compinit
 
 setopt NO_BEEP
 
-export PATH="${PATH}:/home/fate/bin"
+export PATH="$PATH:$HOME/bin"
 export EDITOR=vim
 export MPD_HOST="$HOME/.config/mpd/socket"
 export RTV_URLVIEWER=urlscan
