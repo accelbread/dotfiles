@@ -2,6 +2,7 @@
 
 #export GDK_DPI_SCALE=1.5
 
+#enable keyboard light control
 xkbcomp $DISPLAY /tmp/kbconf.xkb
 sed -i 's/!allowExplicit/allowExplicit/g' /tmp/kbconf.xkb
 xkbcomp /tmp/kbconf.xkb $DISPLAY > /dev/null 2>&1

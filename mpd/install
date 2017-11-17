@@ -1,0 +1,4 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config/mpd"
+cp mpd.conf "$BASE_DIR"
+

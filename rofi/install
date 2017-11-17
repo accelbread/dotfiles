@@ -1,0 +1,4 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config/rofi"
+cp config "$BASE_DIR"
+

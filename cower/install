@@ -1,0 +1,4 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config/cower"
+cp config "$BASE_DIR"
+

@@ -1,0 +1,4 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config/fontconfig"
+cp fonts.conf "$BASE_DIR"
+

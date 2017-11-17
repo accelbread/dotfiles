@@ -1,0 +1,4 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config/dunst"
+cp dunstrc "$BASE_DIR"
+

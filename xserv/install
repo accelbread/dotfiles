@@ -1,0 +1,7 @@
+#!/bin/sh
+cp xinitrc    "$HOME/.xinitrc"
+cp xprofile   "$HOME/.xprofile"
+cp Xmodmap    "$HOME/.Xmodmap"
+cp Xresources "$HOME/.Xresources"
+cp zprofile   "$HOME/.zprofile"
+

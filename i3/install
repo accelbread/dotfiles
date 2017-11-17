@@ -1,0 +1,5 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config"
+cp config "$BASE_DIR/i3"
+cp i3status/config "$BASE_DIR/i3status"
+

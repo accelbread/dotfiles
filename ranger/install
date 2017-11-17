@@ -1,0 +1,4 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config/ranger"
+cp rc.conf "$BASE_DIR"
+

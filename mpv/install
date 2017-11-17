@@ -1,0 +1,5 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config/mpv"
+cp mpv.conf "$BASE_DIR"
+cp input.conf "$BASE_DIR"
+
