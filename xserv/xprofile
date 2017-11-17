@@ -12,6 +12,7 @@ xmodmap ~/.Xmodmap
 xrdb ~/.Xresources
 xset -r 66
 xset -led 1
+xset b
 
 syndaemon -t -K -i 1.5 -d -R
 
