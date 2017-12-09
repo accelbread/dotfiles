@@ -1,17 +1,24 @@
-set lazyredraw
-set showmatch
-
 syntax on
-
 set encoding=utf8
-
-filetype plugin indent on
+set autoindent
+set copyindent
+set expandtab
 set tabstop=4
 set shiftwidth=4
-set expandtab
-
-set ai
-set si
-
+set smarttab
+set ignorecase
+set smartcase
+set hlsearch
+set incsearch
 set visualbell
+set title
+set showmatch
+set hidden
+filetype plugin indent on
+set pastetoggle=<F2>
+noremap ; :
+map <C-h> <C-w>h
+map <C-j> <C-w>j
+map <C-k> <C-w>k
+map <C-l> <C-w>l
 
