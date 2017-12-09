@@ -1,0 +1,6 @@
+image/x-imgur-album; feh %s; test=test -n "$DISPLAY"
+image/gif; mpv '%s' --loop=inf; test=test -n "$DISPLAY"
+image/*; feh '%s'; test=test -n "$DISPLAY"
+video/x-youtube; mpv --ytdl-format=best '%s'; test=test -n "$DISPLAY"
+video/*; mpv '%s'; test=test -n "$DISPLAY"
+
