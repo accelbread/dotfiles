@@ -13,7 +13,7 @@ set seekbar
 set singlequit
 set smartcase
 set sortignorecase
-set songformat {%t}|{%f}$E$R[%l]
+set songformat {%t}|{%f} [%a]$E$R[%l]
 hi tab cyanfg
 hi progress cyanfg
 hi status magentafg
