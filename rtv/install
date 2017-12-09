@@ -1,4 +1,5 @@
 #!/bin/sh
 BASE_DIR="$HOME/.config/rtv"
 cp rtv.cfg "$BASE_DIR"
+cp mailcap "$HOME/.mailcap"
 
