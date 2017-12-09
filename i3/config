@@ -47,12 +47,13 @@ mode "command" {
 
     bindsym r mode "resize"
     
-    bindsym Return      exec urxvt
-    bindsym colon       exec rofi -show drun
-    bindsym shift+colon exec rofi -show run
-    bindsym b           exec qutebrowser
-    bindsym shift+b     exec chromium
-    bindsym v           exec pavucontrol
+    bindsym Return       exec st -e tmux
+    bindsym shift+Return exec st
+    bindsym colon        exec rofi -show drun
+    bindsym shift+colon  exec rofi -show run
+    bindsym b            exec qutebrowser
+    bindsym shift+b      exec chromium
+    bindsym v            exec pavucontrol
 
     bindsym XF86MonBrightnessDown $exec xbacklight -dec 1
     bindsym XF86MonBrightnessUp   $exec xbacklight -inc 1
