@@ -1,0 +1,3 @@
+#!/bin/sh
+lesskey ./lesskey
+
