@@ -1,0 +1,4 @@
+#!/bin/sh
+BASE_DIR="$HOME/.config/python"
+cp pythonrc "$BASE_DIR"
+
