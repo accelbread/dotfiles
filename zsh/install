@@ -1,4 +1,6 @@
 #!/bin/sh
-cp zshenv   "$HOME/.zshenv"
-cp zprofile "$HOME/.zprofile"
-cp zshrc    "$HOME/.zshrc"
+BASE_DIR="$HOME/.config/zsh"
+cp xdg_zshenv "$HOME/.zshenv"
+cp zshenv     "$BASE_DIR/.zshenv"
+cp zprofile   "$BASE_DIR/.zprofile"
+cp zshrc      "$BASE_DIR/.zshrc"
