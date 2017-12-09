@@ -1,0 +1,20 @@
+browser         qutebrowser
+show-read-feeds yes
+max-items       25
+
+bind-key j down
+bind-key k up
+bind-key l open
+bind-key h quit
+bind-key q hard-quit
+bind-key a mark-feed-read
+bind-key A mark-all-feeds-read
+bind-key o open-in-browser-and-mark-read
+bind-key O open-all-unread-and-mark-read
+bind-key n toggle-article-read
+bind-key z toggle-show-read-feeds
+bind-key b goto-url
+bind-key e edit-urls
+bind-key J next-unread-feed
+bind-key K prev-unread-feed
+
