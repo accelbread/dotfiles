@@ -1,0 +1,7 @@
+export PATH="$PATH:$HOME/bin"
+export EDITOR=vim
+
+export MPD_HOST="$HOME/.config/mpd/socket"
+export RTV_URLVIEWER=urlscan
+export RTV_BROWSER="qutebrowser --target window"
+
