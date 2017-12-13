@@ -10,9 +10,10 @@ rm /tmp/kbconf.xkb
 
 xmodmap ~/.Xmodmap
 xrdb ~/.Xresources
-xset -r 66
+#xset -r 66
 xset -led 1
 xset b off
 
+xcape -e 'Caps_Lock=Escape'
 syndaemon -t -K -i 1.5 -d -R
 

@@ -1,2 +1,4 @@
-keycode 66 = Escape Multi_key
-clear Lock
+clear lock
+clear control
+keycode 66 = Control_L
+add control = Control_L Control_R
