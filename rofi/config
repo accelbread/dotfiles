@@ -1,1 +1,3 @@
 rofi.modi: window,run,ssh,drun
+rofi.terminal: st
+
