@@ -14,6 +14,6 @@ xrdb ~/.Xresources
 xset -led 1
 xset b off
 
-xcape -e 'Caps_Lock=Escape'
+xcape -e '0x3000=Escape'
 syndaemon -t -K -i 1.5 -d -R
 
