@@ -35,6 +35,7 @@ bindsym XF86MonBrightnessUp   $exec xbacklight -inc 1
 bindsym XF86AudioMute         $exec pactl set-sink-mute 0 toggle
 bindsym XF86AudioLowerVolume  $exec pactl set-sink-volume 0 -2%
 bindsym XF86AudioRaiseVolume  $exec pactl set-sink-volume 0 +2%
+bindsym XF86AudioMicMute      $exec pactl set-source-mute 1 toggle
 
 bindsym Mod1+Tab       workspace next
 bindsym Mod1+Shift+Tab workspace prev
@@ -56,9 +57,10 @@ mode "command" {
 
     bindsym XF86MonBrightnessDown $exec xbacklight -dec 1
     bindsym XF86MonBrightnessUp   $exec xbacklight -inc 1
-    bindsym XF86AudioMute         $exec pactl set-sink-mute 0 toggle
+    bindsym XF86AudioMute         $exec pactl set-sink-mute   0 toggle
     bindsym XF86AudioLowerVolume  $exec pactl set-sink-volume 0 -2%
     bindsym XF86AudioRaiseVolume  $exec pactl set-sink-volume 0 +2%
+    bindsym XF86AudioMicMute      $exec pactl set-source-mute 1 toggle
 
     bindsym t       $exec synclient TouchpadOff=0
     bindsym shift+t $exec synclient TouchpadOff=1
