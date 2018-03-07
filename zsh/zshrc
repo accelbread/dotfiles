@@ -10,6 +10,8 @@ setopt appendhistory autocd nomatch
 unsetopt notify
 bindkey -v
 # End of lines configured by zsh-newuser-install
+
+fpath+=$ZDOTDIR/.zfunc
 # The following lines were added by compinstall
 
 zstyle ':completion:*' list-colors "${(@s.:.)LS_COLORS}"
