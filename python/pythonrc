@@ -5,3 +5,4 @@ def newhook():
     oldhook()
     atexit.unregister(readline.write_history_file)
 if oldhook: sys.__interactivehook__ = newhook
+

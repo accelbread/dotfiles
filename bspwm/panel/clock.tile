@@ -1,0 +1,10 @@
+# vi:syntax=sh
+
+update_tile_clock() {
+    tile_clock=" $(date +'%a %m/%d %I:%M %Z') "
+}
+
+init_tile_clock() {
+    update_tile_clock
+    tile_add_time
+}

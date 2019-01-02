@@ -1,6 +1,11 @@
-#!/bin/sh
-
 #export GDK_DPI_SCALE=1.5
+export QT_QPA_PLATFORMTHEME="qt5ct"
+
+#xmodmap ~/.Xmodmap
+xrdb ~/.Xresources
+xset -r 66
+setxkbmap -option ctrl:nocaps
+xset b off
 
 #enable keyboard light control
 xkbcomp $DISPLAY /tmp/kbconf.xkb
@@ -8,12 +13,7 @@ sed -i 's/!allowExplicit/allowExplicit/g' /tmp/kbconf.xkb
 xkbcomp /tmp/kbconf.xkb $DISPLAY > /dev/null 2>&1
 rm /tmp/kbconf.xkb
 
-xmodmap ~/.Xmodmap
-xrdb ~/.Xresources
-#xset -r 66
 xset -led 1
-xset b off
 
-xcape -e '0x3000=Escape'
-syndaemon -t -K -i 1.5 -d -R
+xcape -e 'Control_L=Escape;Alt_L=Alt_L|Escape;Alt_R=Alt_R|Escape'
 

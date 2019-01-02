@@ -1,6 +1,6 @@
 #!/bin/sh
 BASE_DIR="$HOME/.config/zsh"
-cp xdg_zshenv "$HOME/.zshenv"
+#cp xdg_zshenv "$HOME/.zshenv"
 cp zshenv     "$BASE_DIR/.zshenv"
 cp zprofile   "$BASE_DIR/.zprofile"
 cp zshrc      "$BASE_DIR/.zshrc"

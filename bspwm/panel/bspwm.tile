@@ -1,0 +1,32 @@
+# vi:syntax=sh
+
+init_tile_bspwm() {
+    tile_bspwm=''
+
+    bspc subscribe report > "$PANEL_FIFO" &
+}
+
+update_tile_bspwm() {
+    tile_bspwm=$(printf '%s' "$1" | awk \
+    -v focL=$THEME_DESKTOP_FOCUSED_L \
+    -v focR=$THEME_DESKTOP_FOCUSED_R \
+    -v occL=$THEME_DESKTOP_OCCUPIED_L \
+    -v occR=$THEME_DESKTOP_OCCUPIED_R \
+    -v freL=$THEME_DESKTOP_FREE_L \
+    -v freR=$THEME_DESKTOP_FREE_R \
+    -v urgL=$THEME_DESKTOP_URGENT_L \
+    -v urgR=$THEME_DESKTOP_URGENT_R \
+'BEGIN { RS="[:\n]"; ORS=""; }
+{ field=substr($0,2); }
+/^o/ { print occL "%{A:bspc desktop -f " field ":} " field " %{A}" occR; next; }
+/^f/ { print freL "%{A:bspc desktop -f " field ":} " field " %{A}" freR; next; }
+/^u/ { print urgL "%{A:bspc desktop -f " field ":} " field " %{A}" urgR; next; }
+/^O/ { print occL focL "%{A:bspc desktop -f " field ":} " field " %{A}" focR occR; next; }
+/^F/ { print freL focL "%{A:bspc desktop -f " field ":} " field " %{A}" focR freR; next; }
+/^U/ { print urgL focL "%{A:bspc desktop -f " field ":} " field " %{A}" focR urgR; next; }
+/^L/ { print " " field " "; next; }
+/^T/ { print field; next; }
+/^G/ { print " " field " "; next; }
+')
+}
+

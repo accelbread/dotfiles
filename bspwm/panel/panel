@@ -1,0 +1,75 @@
+#! /bin/sh
+cd "${XDG_CONFIG_HOME}/bspwm/panel"
+
+trap 'kill $(pgrep -P $$)' INT TERM QUIT EXIT
+trap 'kill $(pgrep -P $$); exec ./panel' USR1
+
+. ../theme
+. ./config
+
+if xdo id -a "$PANEL_WM_NAME" > /dev/null ; then
+    printf "%s\n" "The panel is already running." >&2
+    exit 1
+fi
+
+[ -e "$PANEL_FIFO" ] || mkfifo "$PANEL_FIFO"
+
+tile_refresh_list=''
+tile_refresh_list_sep=''
+tile_add_refresh() {
+    tile_refresh_list="${tile_refresh_list}${tile_refresh_list_sep}${tile}"
+    tile_refresh_list_sep='\n'
+}
+update_tile_refresh() {
+    for tile in "${tile_refresh_list}"; do
+        update_tile_${tile}
+    done
+}
+#while true; do
+#    printf '%s\n' 'refresh)'
+#    sleep 5
+#done > "$PANEL_FIFO" &
+
+navi 5 "refresh)" > "$PANEL_FIFO" &
+
+tile_time_list=''
+tile_time_list_sep=''
+tile_add_time() {
+    tile_time_list="${tile_time_list}${tile_time_list_sep}${tile}"
+    tile_time_list_sep='\n'
+}
+update_tile_time() {
+    for tile in "${tile_time_list}"; do
+        update_tile_${tile}
+    done
+}
+#systemctl --user restart bar_clock.service
+#systemctl --user restart bar_clock.timer
+
+tiles_regex='^\(refresh\|time'
+for file in *.tile; do
+    tile=$(expr "$file" : '^\([A-Za-z0-9_]*\)\.tile$')
+    if [ "x$tile" != 'x' ]; then
+        . "./${tile}.tile"
+        init_tile_${tile}
+        tiles_regex="${tiles_regex}\\|${tile}"
+    fi
+done
+tiles_regex="${tiles_regex}\\))"
+
+while read line; do
+    tile=$(expr "$line" : "${tiles_regex}")
+    if [ "x$tile" != 'x' ]; then
+        input=$(expr "$line" : "${tile}"')\(.*\)$')
+        update_tile_${tile} "$input"
+        eval "printf '%s\n' \"${PANEL_LINE}\""
+    fi
+done < "$PANEL_FIFO" | lemonbar -a 32 -u "$PANEL_UNDERLINE" -n "$PANEL_WM_NAME" \
+    -g x$PANEL_HEIGHT -f "$FONT_PANEL_1" -f "$FONT_PANEL_2" -f "$FONT_PANEL_3" \
+    -F "$COLOR_PANEL_DEFAULT_FG" -B "$COLOR_PANEL_DEFAULT_BG" eDP-1 | sh &
+
+wid=$(xdo id -m -a "$PANEL_WM_NAME")
+xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
+
+wait
+
