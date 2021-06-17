@@ -1,18 +1,16 @@
-local fn = vim.fn
-
 -- Install packer
-local install_path = fn.stdpath('data')..'/site/pack/packer/opt/packer.nvim'
+local install_path = vim.fn.stdpath'data'..'/site/pack/packer/opt/packer.nvim'
 
-if fn.empty(fn.glob(install_path)) > 0 then
-  fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
+if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
+  vim.fn.system{'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path}
 end
 
 -- Load packer
-vim.cmd 'packadd packer.nvim'
+vim.cmd'packadd packer.nvim'
 
 -- packer config
 return require('packer').startup(function(use)
-  use {'wbthomason/packer.nvim', config = [[require 'plugins']], cmd = {'PackerSync', 'PackerCompile'}}
+  use {'wbthomason/packer.nvim', config = [[dofile(vim.fn.stdpath'config'..'/plugins.lua')]], cmd = 'PackerSync'}
   use {'neovim/nvim-lspconfig',
     ft = {'rust','c','cpp','python'},
     config = function()
@@ -35,7 +33,7 @@ return require('packer').startup(function(use)
     end}
   use {'kosayoda/nvim-lightbulb', after = 'nvim-lspconfig',
     config = function()
-      vim.fn.sign_define('LightBulbSign', {text = "O"})
+      vim.fn.sign_define('LightBulbSign', {text = "A", texthl = 'LspDiagnosticsSignHint'})
       vim.cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()]]
     end}
   use {'nvim-treesitter/nvim-treesitter',
@@ -72,7 +70,7 @@ return require('packer').startup(function(use)
       vim.g.tokyonight_style = 'night'
       vim.g.tokyonight_transparent = true
       vim.cmd[[colorscheme tokyonight]]
-      require'colors'.setup()
+      dofile(vim.fn.stdpath'config'..'/colors.lua')
     end}
   use {'sindrets/diffview.nvim', cmd = 'DiffviewOpen', module = 'diffview',
     config = function()
