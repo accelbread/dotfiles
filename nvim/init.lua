@@ -1,12 +1,8 @@
+require('impatient')
+
 local cmd = vim.cmd
 local opt = vim.opt
-local g   = vim.g
-
-local function map(mode, lhs, rhs, opts)
-  local options = {noremap = true}
-  if opts then options = vim.tbl_extend('force', options, opts) end
-  vim.api.nvim_set_keymap(mode, lhs, rhs, options)
-end
+local g = vim.g
 
 opt.expandtab = true
 opt.copyindent = true
@@ -18,26 +14,38 @@ opt.smartcase = true
 opt.hidden = true
 opt.pastetoggle = '<F2>'
 opt.inccommand = 'split'
+opt.spelloptions = 'camel'
 opt.equalalways = false
+opt.joinspaces = false
 opt.grepprg = 'rg --vimgrep'
 opt.completeopt = {'menuone', 'noinsert', 'noselect'}
 opt.shortmess = opt.shortmess + 'c'
 opt.ttimeoutlen = 0
+opt.timeoutlen = 200
 opt.list = true
+opt.lazyredraw = true
 opt.listchars = 'trail:▒,tab:> |,nbsp:␣'
-g.mapleader = " "
-g.maplocalleader = " "
+g.mapleader = ' '
+g.maplocalleader = ' '
+g.c_syntax_for_h = 1
 
 opt.mouse = 'nv'
-map('v', '<LeftRelease>', '"*ygv<LeftRelease>')
-
-map('n', '<C-a>', '<nop>')
-map('t', '<C-a>', '<C-\\><C-n>')
-
 opt.visualbell = true
 opt.showbreak = '> '
 opt.termguicolors = true
-opt.background = 'dark'
 opt.colorcolumn = {80, 100}
 
-cmd('autocmd FileType mail set spell')
+cmd[[
+  augroup spell_enable
+    autocmd!
+    autocmd BufEnter * lua if(pcall(vim.treesitter.get_parser)) then vim.wo.spell = true end
+    autocmd FileType mail,markdown setlocal spell
+  augroup END
+]]
+
+function load_config(name)
+  local file = vim.fn.stdpath'config' .. '/cfg/' .. name .. '.lua'
+  if vim.loop.fs_stat(file) then
+    dofile(vim.fn.stdpath'config' .. '/cfg/' .. name .. '.lua')
+  end
+end
