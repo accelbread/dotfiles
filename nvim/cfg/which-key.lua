@@ -1,5 +1,9 @@
 local wk = require('which-key')
 
+local function t(str)
+  return vim.api.nvim_replace_termcodes(str, true, true, true)
+end
+
 wk.setup{plugins = {spelling = {enabled = true, suggestions = 50}}}
 
 wk.register{
@@ -27,4 +31,4 @@ wk.register({
   Z = {'<Esc>', 'which_key_ignore'}
 }, {mode = 'o'})
 
-wk.register({['<C-a>'] = {'<C-\\><C-n>', 'Escape'}}, {mode = 't'})
+wk.register({['<C-a>'] = {t('<C-\\><C-n>'), 'Escape'}}, {mode = 't'})
