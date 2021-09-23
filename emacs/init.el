@@ -80,11 +80,14 @@
 (use-package magit
   :custom
   (magit-view-git-manual-method 'man)
-  (transient-history-file null-device))
+  (transient-history-file null-device)
+  (magit-save-repository-buffers 'dontask))
 (use-package magit-todos)
 
 ;;;; Language support
 (use-package eglot
+  :config
+  (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer")))
   :hook ((c-mode . eglot-ensure)
          (rust-mode . eglot-ensure)
          (zig-mode . eglot-ensure)))
@@ -127,7 +130,14 @@
   :diminish
   :config
   (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+  (setq-default flyspell-prog-text-faces
+    '(tree-sitter-hl-face:comment
+      tree-sitter-hl-face:doc
+      tree-sitter-hl-face:string
+      font-lock-comment-face
+      font-lock-doc-face
+      font-lock-string-face)))
 (use-package tree-sitter-langs)
 (use-package hl-todo
   :config
@@ -136,7 +146,6 @@
 ;;; Settings
 
 (require 'config-emoji-modifiers)
-
 (load-theme 'doom-moonlight t)
 (set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
 (set-fontset-font t 'symbol "Twemoji")
@@ -159,6 +168,14 @@
 (setq flymake-mode-line-counter-format
   '("[" flymake-mode-line-error-counter flymake-mode-line-warning-counter "]"))
 (setq flymake-mode-line-format '(" " flymake-mode-line-counters))
+(setq ispell-dictionary "en_US")
+(setq ispell-program-name "aspell")
+(setq ispell-extra-args '("--camel-case"))
+(setq flyspell-issue-message-flag nil)
+(setq flyspell-mode-line-string nil)
+(add-hook 'flyspell-mode-hook
+  (lambda () (if flyspell-mode (run-with-idle-timer 0 nil
+    (lambda () (with-local-quit (flyspell-buffer)))))))
 
 (window-divider-mode 1)
 (column-number-mode 1)
@@ -166,8 +183,10 @@
 (fringe-mode 9)
 (global-whitespace-mode 1)
 (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
-(add-hook 'text-mode-hook 'display-fill-column-indicator-mode)
 (add-hook 'prog-mode-hook 'show-paren-mode)
+(add-hook 'prog-mode-hook 'flyspell-prog-mode)
+(add-hook 'text-mode-hook 'display-fill-column-indicator-mode)
+(add-hook 'text-mode-hook 'flyspell-mode)
 
 (diminish 'abbrev-mode)
 (diminish 'global-whitespace-mode)
