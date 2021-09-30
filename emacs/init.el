@@ -35,7 +35,8 @@
   :config
   (evil-mode)
   (evil-set-type 'evil-backward-word-begin 'inclusive)
-  (evil-set-type 'evil-backward-WORD-begin 'inclusive))
+  (evil-set-type 'evil-backward-WORD-begin 'inclusive)
+  (evil-global-set-key 'normal (kbd "z=") 'flyspell-correct-at-point))
 (use-package evil-collection
   :after evil
   :custom
@@ -47,6 +48,8 @@
   (evil-collection-init))
 (use-package undo-fu
   :if (version< emacs-version "28"))
+(use-package flyspell-correct
+  :after flyspell)
 
 ;;;; Completion
 (use-package selectrum
@@ -163,6 +166,7 @@
 (setq whitespace-style '(face trailing tab-mark))
 (setq-default fill-column 80)
 (setq-default tab-width 4)
+(setq-default indent-tabs-mode nil)
 (setq eldoc-echo-area-prefer-doc-buffer t)
 (setq eldoc-minor-mode-string " Doc")
 (setq flymake-mode-line-counter-format
@@ -173,20 +177,34 @@
 (setq ispell-extra-args '("--camel-case"))
 (setq flyspell-issue-message-flag nil)
 (setq flyspell-mode-line-string nil)
-(add-hook 'flyspell-mode-hook
-  (lambda () (if flyspell-mode (run-with-idle-timer 0 nil
-    (lambda () (with-local-quit (flyspell-buffer)))))))
+
+;;;; Automatic spell checking
+(defun my-flyspell-buffer (&rest _)
+  (if flyspell-mode
+    (run-with-idle-timer 0 nil
+      (lambda () (with-local-quit (flyspell-buffer))))))
+(add-hook 'flyspell-mode-hook #'my-flyspell-buffer)
+(advice-add 'ispell-pdict-save :after #'my-flyspell-buffer)
+(advice-add 'evil-paste-before :after #'my-flyspell-buffer)
+(advice-add 'evil-paste-after :after #'my-flyspell-buffer)
 
 (window-divider-mode 1)
 (column-number-mode 1)
 (blink-cursor-mode 0)
 (fringe-mode 9)
 (global-whitespace-mode 1)
+(global-auto-revert-mode 1)
+
 (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
-(add-hook 'prog-mode-hook 'show-paren-mode)
 (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+(add-hook 'prog-mode-hook 'show-paren-mode)
+
 (add-hook 'text-mode-hook 'display-fill-column-indicator-mode)
 (add-hook 'text-mode-hook 'flyspell-mode)
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+
+(add-hook 'emacs-lisp-mode-hook (lambda () (electric-indent-local-mode 0)))
 
 (diminish 'abbrev-mode)
 (diminish 'global-whitespace-mode)
+(diminish 'global-auto-revert-mode)
