@@ -73,6 +73,7 @@
 (use-package vterm
   :after evil
   :custom
+  (vterm-shell "fish")
   (vterm-always-compile-module t)
   (vterm-max-scrollback 5000)
   (vterm-timer-delay 0.01)
@@ -102,7 +103,9 @@
   :custom
   (markdown-asymmetric-header t)
   (markdown-fontify-code-blocks-natively t)
-  (markdown-unordered-list-item-prefix nil))
+  (markdown-unordered-list-item-prefix nil)
+  (markdown-disable-tooltip-prompt t)
+  (markdown-command '("pandoc" "--from=markdown" "--to=html5")))
 (use-package rust-mode
   :custom
   (rust-format-on-save t))
@@ -179,10 +182,7 @@
 (setq flyspell-mode-line-string nil)
 
 ;;;; Automatic spell checking
-(defun my-flyspell-buffer (&rest _)
-  (if flyspell-mode
-    (run-with-idle-timer 0 nil
-      (lambda () (with-local-quit (flyspell-buffer))))))
+(defun my-flyspell-buffer (&rest _) (if flyspell-mode (flyspell-buffer)))
 (add-hook 'flyspell-mode-hook #'my-flyspell-buffer)
 (advice-add 'ispell-pdict-save :after #'my-flyspell-buffer)
 (advice-add 'evil-paste-before :after #'my-flyspell-buffer)
