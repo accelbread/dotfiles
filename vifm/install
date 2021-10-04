@@ -1,5 +1,0 @@
-#!/bin/sh
-BASE_DIR="$HOME/.config/vifm"
-cp vifmrc "$BASE_DIR"
-cp colors/Custom.vifm "$BASE_DIR/colors"
-

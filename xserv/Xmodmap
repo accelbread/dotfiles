@@ -1,4 +1,0 @@
-clear lock
-keycode 66 = 0x3000
-add control = 0x3000
-

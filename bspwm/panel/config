@@ -1,12 +1,12 @@
 # vi:syntax=sh
-PANEL_FIFO=/home/fate/.local/share/bspwm/panel-fifo
-PANEL_HEIGHT=30
+PANEL_FIFO=/home/archit/.local/share/bspwm/panel-fifo
+PANEL_HEIGHT=25
 PANEL_WM_NAME=bspwm_panel
-PANEL_LINE='%{l}${tile_bspwm}%{c}%{r}${tile_battery}|${tile_clock}'
+PANEL_LINE='%{l}${tile_bspwm}%{c}%{r}${tile_clock}%{S+}%{l}${tile_bspwm}%{c}%{r}${tile_clock}%{S+}%{l}${tile_bspwm}%{c}%{r}${tile_clock}'
 PANEL_REFRESH_SECONDS=5
 
 BATTERY_MEDIUM=70
 BATTERY_LOW=40
 
-NETWORK_DEVICE="wlp58s0"
+NETWORK_DEVICE="wlan0"
 

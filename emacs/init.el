@@ -1,5 +1,4 @@
 ;;; Configure and install packages
-
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'load-path "~/.config/emacs/lisp")
@@ -19,10 +18,7 @@
   :custom
   (evil-want-integration t)
   (evil-want-keybinding nil)
-  (evil-undo-system
-    (if (version<= "28" emacs-version)
-      'undo-redo
-      'undo-fu))
+  (evil-undo-system 'undo-redo)
   (evil-search-module 'evil-search)
   (evil-cross-lines t)
   (evil-want-Y-yank-to-eol t)
@@ -36,6 +32,13 @@
   (evil-mode)
   (evil-set-type 'evil-backward-word-begin 'inclusive)
   (evil-set-type 'evil-backward-WORD-begin 'inclusive)
+  (defun save-kill-current-buffer ()
+    "Save and kill current buffer"
+    (interactive)
+    (save-buffer)
+    (kill-current-buffer))
+  (evil-ex-define-cmd "bd[elete]" 'kill-current-buffer)
+  (evil-ex-define-cmd "wbd[elete]" 'save-kill-current-buffer)
   (evil-global-set-key 'normal (kbd "z=") 'flyspell-correct-at-point))
 (use-package evil-collection
   :after evil
@@ -46,10 +49,12 @@
   (evil-collection-magit-use-z-for-folds t)
   :config
   (evil-collection-init))
-(use-package undo-fu
-  :if (version< emacs-version "28"))
 (use-package flyspell-correct
   :after flyspell)
+(when (version< emacs-version "28")
+  (use-package undo-fu
+    :custom
+    (evil-undo-system 'undo-fu)))
 
 ;;;; Completion
 (use-package selectrum
@@ -150,13 +155,14 @@
   (global-hl-todo-mode))
 
 ;;; Settings
-
+;;;; Theme
 (require 'config-emoji-modifiers)
 (load-theme 'doom-moonlight t)
 (set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
 (set-fontset-font t 'symbol "Twemoji")
 (set-face-attribute 'fringe nil :foreground "deep sky blue")
 
+;;;; Configuration
 (setq inhibit-startup-message t)
 (setq initial-scratch-message nil)
 (setq create-lockfiles nil)
@@ -182,29 +188,51 @@
 (setq flyspell-mode-line-string nil)
 
 ;;;; Automatic spell checking
-(defun my-flyspell-buffer (&rest _) (if flyspell-mode (flyspell-buffer)))
+(defun my-flyspell-buffer (&rest _) (when flyspell-mode (flyspell-buffer)))
 (add-hook 'flyspell-mode-hook #'my-flyspell-buffer)
 (advice-add 'ispell-pdict-save :after #'my-flyspell-buffer)
 (advice-add 'evil-paste-before :after #'my-flyspell-buffer)
 (advice-add 'evil-paste-after :after #'my-flyspell-buffer)
 
+;;;; Modes
 (window-divider-mode 1)
 (column-number-mode 1)
 (blink-cursor-mode 0)
 (fringe-mode 9)
-(global-whitespace-mode 1)
 (global-auto-revert-mode 1)
 
-(add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
-(add-hook 'prog-mode-hook 'flyspell-prog-mode)
-(add-hook 'prog-mode-hook 'show-paren-mode)
+(add-hook 'prog-mode-hook (lambda ()
+  (display-fill-column-indicator-mode)
+  (whitespace-mode)
+  (flyspell-prog-mode)
+  (show-paren-mode)))
 
-(add-hook 'text-mode-hook 'display-fill-column-indicator-mode)
-(add-hook 'text-mode-hook 'flyspell-mode)
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(add-hook 'text-mode-hook (lambda ()
+  (display-fill-column-indicator-mode)
+  (whitespace-mode)
+  (flyspell-mode)
+  (turn-on-auto-fill)))
 
-(add-hook 'emacs-lisp-mode-hook (lambda () (electric-indent-local-mode 0)))
+(add-hook 'emacs-lisp-mode-hook (apply-partially 'electric-indent-local-mode 0))
 
+;;;; Diminish
 (diminish 'abbrev-mode)
-(diminish 'global-whitespace-mode)
-(diminish 'global-auto-revert-mode)
+(diminish 'whitespace-mode)
+(diminish 'auto-revert-mode)
+
+;;; Start server and set environment
+(let ((emacsclient "emacsclient"))
+  (unless (daemonp)
+    (setq server-name (concat server-name (number-to-string (emacs-pid))))
+    (setq emacsclient (concat emacsclient
+      " --socket-name="
+      (shell-quote-argument (expand-file-name server-name server-socket-dir))))
+    (server-start))
+  (setenv "EDITOR" emacsclient)
+  (setenv "VISUAL" emacsclient))
+
+;;; Commands
+(defun esp32c3 ()
+  "Serial console for esp32-c3"
+  (interactive)
+  (serial-term (serial-read-name) 115200))

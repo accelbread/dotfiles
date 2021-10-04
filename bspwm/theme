@@ -1,24 +1,12 @@
 # vi:syntax=sh
 
-COLOR_1="#65A8DF"
-COLOR_2="#BA57CE"
-COLOR_3="#5F47CB"
-COLOR_4="#3F3693"
-COLOR_5="#201A3D"
-COLOR_6="#ff6980"
-
-COLOR_NORM=$COLOR_1
-COLOR_HIGH=$COLOR_2
-COLOR_WARN=$COLOR_6
-COLOR_DARK=$COLOR_5
-
 COLOR_PANEL_DEFAULT_FG="$COLOR_NORM"
 COLOR_PANEL_DEFAULT_BG="#B2${COLOR_DARK#\#}"
 PANEL_UNDERLINE=2
 
-FONT_PANEL_1="DejaVu Sans:size=8"
-FONT_PANEL_2="DejaVu Sans:size=8:bold"
-FONT_PANEL_3="DejaVu Sans:size=8:slant=italic,oblique"
+FONT_PANEL_1="DejaVu Sans:size=14"
+FONT_PANEL_2="DejaVu Sans:size=14:bold"
+FONT_PANEL_3="DejaVu Sans:size=14:slant=italic,oblique"
 
 THEME_DESKTOP_FOCUSED_L="%{+u}"
 THEME_DESKTOP_FOCUSED_R="%{-u}"

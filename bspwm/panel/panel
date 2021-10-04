@@ -14,23 +14,23 @@ fi
 
 [ -e "$PANEL_FIFO" ] || mkfifo "$PANEL_FIFO"
 
-tile_refresh_list=''
-tile_refresh_list_sep=''
-tile_add_refresh() {
-    tile_refresh_list="${tile_refresh_list}${tile_refresh_list_sep}${tile}"
-    tile_refresh_list_sep='\n'
-}
-update_tile_refresh() {
-    for tile in "${tile_refresh_list}"; do
-        update_tile_${tile}
-    done
-}
+#tile_refresh_list=''
+#tile_refresh_list_sep=''
+#tile_add_refresh() {
+#    tile_refresh_list="${tile_refresh_list}${tile_refresh_list_sep}${tile}"
+#    tile_refresh_list_sep='\n'
+#}
+#update_tile_refresh() {
+#    for tile in "${tile_refresh_list}"; do
+#        update_tile_${tile}
+#    done
+#}
 #while true; do
 #    printf '%s\n' 'refresh)'
 #    sleep 5
 #done > "$PANEL_FIFO" &
 
-navi 5 "refresh)" > "$PANEL_FIFO" &
+#navi 5 "refresh)" > "$PANEL_FIFO" &
 
 tile_time_list=''
 tile_time_list_sep=''
@@ -66,10 +66,9 @@ while read line; do
     fi
 done < "$PANEL_FIFO" | lemonbar -a 32 -u "$PANEL_UNDERLINE" -n "$PANEL_WM_NAME" \
     -g x$PANEL_HEIGHT -f "$FONT_PANEL_1" -f "$FONT_PANEL_2" -f "$FONT_PANEL_3" \
-    -F "$COLOR_PANEL_DEFAULT_FG" -B "$COLOR_PANEL_DEFAULT_BG" eDP-1 | sh &
+    -F "$COLOR_PANEL_DEFAULT_FG" -B "$COLOR_PANEL_DEFAULT_BG" | sh &
 
 wid=$(xdo id -m -a "$PANEL_WM_NAME")
 xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
 
 wait
-

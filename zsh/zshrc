@@ -1,12 +1,11 @@
 HISTFILE="$HOME/.local/share/zsh/history"
 
-# Set $LS_COLORS
-TERM="xterm-256color" dircolors -b | source /dev/stdin
+dircolors -b /etc/DIR_COLORS | source /dev/stdin
 
 # Lines configured by zsh-newuser-install
 HISTSIZE=1000
 SAVEHIST=1000
-setopt appendhistory autocd nomatch promptsubst
+setopt appendhistory autocd nomatch promptsubst histignorespace
 unsetopt notify
 bindkey -v
 # End of lines configured by zsh-newuser-install
@@ -16,6 +15,9 @@ zstyle ':completion:*' list-colors "${(@s.:.)LS_COLORS}"
 zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
 zstyle ':completion:*' menu select=1
 zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
+zstyle ':completion:*' accept-exact-dirs true
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path "$HOME/.cache/zsh"
 zstyle :compinstall filename "$ZDOTDIR/.zshrc"
 
 autoload -Uz compinit
@@ -24,29 +26,10 @@ compinit
 
 setopt NO_BEEP
 
-# zsh-git-prompt
-#source /usr/lib/zsh-git-prompt/zshrc.sh
-#ZSH_THEME_GIT_PROMPT_PREFIX="["
-#ZSH_THEME_GIT_PROMPT_SUFFIX="] "
-#ZSH_THEME_GIT_PROMPT_CHANGED="%F{12}%{✚%G%}"
-#reset_color="\e[0;36m"
-
-# prompt
-#git_prompt() {
-#    if git rev-parse --git-dir > /dev/null 2>&1; then
-#        echo "$(git_super_status)"
-#    fi
-#}
-
-if [[ -e /usr/share/zsh/site-contrib/fzf.zsh ]]; then
-    . /usr/share/zsh/site-contrib/fzf.zsh
-fi
-
 if [[ -v NVIM_LISTEN_ADDRESS ]]; then
     function chpwd() {
         ~/.config/nvim/update_lcd
     }
-    export EDITOR="nvr --remote-wait"
 fi
 
 mode_color='0;0;0'
@@ -55,8 +38,6 @@ if [[ "$TERM" != "linux"  ]]; then
 else
     prompt_end=")"
 fi
-#PROMPT='%F{6}$(git_prompt)%(?..%B%F{1}%? %b%f)%F{$mode_color}%1/$prompt_end %f'
-#PROMPT='%(?..%B%F{1}%? %b%f)%F{$mode_color}%1/'$prompt_end' %f'
 PROMPT=$'%(?..%B%F{1}%? %b%f)%{\x1b[38;2;${mode_color}m%}%1/'$prompt_end$' %{\x1b[0m%}'
 
 mode_cmd_color=$(printf "%d;%d;%d\n" 0x${COLOR_HIGH:1:2} 0x${COLOR_HIGH:3:2} 0x${COLOR_HIGH:5:2})
@@ -84,6 +65,9 @@ zle-line-init() {
 zle -N zle-line-finish
 zle -N zle-line-init
 
+precmd () {print -Pn "\e]2;%~\a"}
+
+
 # Lower delay in switching vi mode
 export KEYTIMEOUT=1
 
@@ -98,3 +82,8 @@ alias ls='ls --color=auto'
 alias diff='diff --color=auto'
 alias cp='cp --reflink=auto'
 
+if [[ "$INSIDE_EMACS" = 'vterm' ]] \
+    && [[ -n ${EMACS_VTERM_PATH} ]] \
+    && [[ -f ${EMACS_VTERM_PATH}/etc/emacs-vterm-zsh.sh ]]; then
+    source ${EMACS_VTERM_PATH}/etc/emacs-vterm-zsh.sh
+fi

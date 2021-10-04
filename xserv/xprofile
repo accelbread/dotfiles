@@ -1,19 +1,21 @@
-#export GDK_DPI_SCALE=1.5
-export QT_QPA_PLATFORMTHEME="qt5ct"
+export GDK_DPI_SCALE=1.5
+export QT_AUTO_SCREEN_SCALE_FACTOR=0
+export QT_SCALE_FACTOR=1.5
 
-#xmodmap ~/.Xmodmap
-xrdb ~/.Xresources
-xset -r 66
-setxkbmap -option ctrl:nocaps
+# Map caps to ctrl
+#xset -r 66
+#setxkbmap -option ctrl:nocaps
+
 xset b off
 
-#enable keyboard light control
-xkbcomp $DISPLAY /tmp/kbconf.xkb
-sed -i 's/!allowExplicit/allowExplicit/g' /tmp/kbconf.xkb
-xkbcomp /tmp/kbconf.xkb $DISPLAY > /dev/null 2>&1
-rm /tmp/kbconf.xkb
+pulseaudio --start
 
-xset -led 1
+# Enable keyboard light control
+#xkbcomp $DISPLAY /tmp/kbconf.xkb
+#sed -i 's/!allowExplicit/allowExplicit/g' /tmp/kbconf.xkb
+#xkbcomp /tmp/kbconf.xkb $DISPLAY 2>/dev/null
+#rm /tmp/kbconf.xkb
+#xset -led 1
 
-xcape -e 'Control_L=Escape;Alt_L=Alt_L|Escape;Alt_R=Alt_R|Escape'
-
+#xsetwacom set "Wacom Intuos5 touch M Pen stylus" MapToOutput DisplayPort-0
+#xsetwacom set "Wacom Intuos5 touch M Pen eraser" MapToOutput DisplayPort-0

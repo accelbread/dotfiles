@@ -1,1 +1,25 @@
-if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then exec startx; fi
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+export EDITOR=vi
+export VISUAL="$EDITOR"
+export BROWSER=firefox
+
+export RUST_SRC_PATH='/usr/lib/rustlib/src/rust/src'
+export PYTHONSTARTUP="$HOME/.config/python/pythonrc"
+export MPD_HOST="$HOME/.local/share/mpd/socket"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CURRENT_DESKTOP=X-Generic
+export SCIPY_PIL_IMAGE_VIEWER=feh
+export SKIM_DEFAULT_COMMAND='fd --type file --color=always --follow --hidden --exclude .git'
+export SKIM_DEFAULT_OPTIONS='--ansi'
+export MOZ_USE_XINPUT2=1
+export MOZ_X11_EGL=1
+
+source "$HOME/.colors"
+
+if [ -n "$TMPDIR" ]; then
+    mkdir -p "$TMPDIR/downloads"
+fi
+
+if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then
+    exec startx;
+fi

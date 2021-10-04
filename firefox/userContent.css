@@ -1,0 +1,37 @@
+:root {
+  scrollbar-color: #7AA2F7 #292E42 !important;
+}
+
+* {
+  border-radius: 0px !important;
+}
+
+@-moz-document url(chrome://browser/content/browser.xul), url(about:newtab), url(about:home) {
+  body {
+    --newtab-background-color: #212337 !important;
+    --newtab-textbox-background-color: #191a2a !important;
+    --newtab-background-button-hover-color: #191a2a !important;
+    --newtab-background-button-active-color: #191a2a !important;
+  }
+}
+
+@-moz-document domain("discord.com") {
+  * {
+    scrollbar-color: #7AA2F7 #292E42 !important;
+    font-family: sans-serif !important;
+  }
+  ul[data-list-id="guildsnav"] > * > [class*='listItem'],
+  div[aria-label="Help"],
+  button[aria-label="Send a gift"],
+  button[aria-label="Open GIF picker"],
+  div#private-channels > * > a[href="/store"],
+  div#private-channels > * > a[href="/discovery"] {
+    display: none !important;
+  }
+  div[class*='cozyMessage'] {
+    border-top: 1px solid #1f2335 !important;
+  }
+  div[class*='wrapperSimple'] {
+      border-radius: 50% !important;
+  }
+}
