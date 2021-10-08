@@ -1,7 +1,14 @@
+;;; Function defs for config
+(defun add-once-hook (hook fn)
+  (let ((fn-wrapper (lambda (self hook fn)
+                      (remove-hook hook (apply-partially self self hook fn))
+                      (funcall fn))))
+    (add-hook hook (apply-partially fn-wrapper fn-wrapper hook fn))))
+
 ;;; Configure and install packages
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'load-path "~/.config/emacs/lisp")
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'load-path (concat user-emacs-directory "lisp"))
 
 (eval-when-compile
   (unless (package-installed-p 'use-package)
@@ -11,6 +18,7 @@
   (require 'use-package)
   (setq use-package-always-ensure t))
 
+;;;; use-package deps
 (use-package diminish)
 
 ;;;; Evil
@@ -71,6 +79,10 @@
   :custom
   (company-minimum-prefix-length 1)
   (company-idle-delay 0.0)
+  (company-dabbrev-downcase nil)
+  (company-dabbrev-ignore-case nil)
+  (company-backends '(company-files
+    (:separate company-yasnippet company-capf company-dabbrev company-ispell)))
   :config
   (global-company-mode))
 
@@ -96,10 +108,12 @@
 ;;;; Language support
 (use-package eglot
   :config
+  (add-to-list 'eglot-stay-out-of 'company)
   (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer")))
   :hook ((c-mode . eglot-ensure)
          (rust-mode . eglot-ensure)
-         (zig-mode . eglot-ensure)))
+         (zig-mode . eglot-ensure)
+         (python-mode . eglot-ensure)))
 (use-package yasnippet
   :diminish yas-minor-mode
   :config
@@ -122,6 +136,57 @@
 (use-package zig-mode)
 (use-package cmake-mode)
 
+;;;; Treesitter
+(use-package tree-sitter
+  :diminish
+  :config
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+  (setq-default flyspell-prog-text-faces
+    '(tree-sitter-hl-face:comment
+      tree-sitter-hl-face:doc
+      tree-sitter-hl-face:string
+      font-lock-comment-face
+      font-lock-doc-face
+      font-lock-string-face)))
+(use-package tree-sitter-langs)
+(use-package evil-textobj-tree-sitter
+  :config
+  (define-key evil-outer-text-objects-map "k" `("TS block" .
+    ,(evil-textobj-tree-sitter-get-textobj "block.outer")))
+  (define-key evil-outer-text-objects-map "c" `("TS call" .
+    ,(evil-textobj-tree-sitter-get-textobj "call.outer")))
+  (define-key evil-outer-text-objects-map "C" `("TS class" .
+    ,(evil-textobj-tree-sitter-get-textobj "class.outer")))
+  (define-key evil-outer-text-objects-map "/" `("TS comment" .
+    ,(evil-textobj-tree-sitter-get-textobj "comment.outer")))
+  (define-key evil-outer-text-objects-map "i" `("TS conditional" .
+    ,(evil-textobj-tree-sitter-get-textobj "conditional.outer")))
+  (define-key evil-outer-text-objects-map "f" `("TS function" .
+    ,(evil-textobj-tree-sitter-get-textobj "function.outer")))
+  (define-key evil-outer-text-objects-map "l" `("TS loop" .
+    ,(evil-textobj-tree-sitter-get-textobj "loop.outer")))
+  (define-key evil-outer-text-objects-map "P" `("TS parameter" .
+    ,(evil-textobj-tree-sitter-get-textobj "parameter.outer")))
+  (define-key evil-outer-text-objects-map "S" `("TS statement" .
+    ,(evil-textobj-tree-sitter-get-textobj "statement.outer")))
+  (define-key evil-inner-text-objects-map "k" `("TS block" .
+    ,(evil-textobj-tree-sitter-get-textobj "block.inner")))
+  (define-key evil-inner-text-objects-map "c" `("TS call" .
+    ,(evil-textobj-tree-sitter-get-textobj "call.inner")))
+  (define-key evil-inner-text-objects-map "C" `("TS class" .
+    ,(evil-textobj-tree-sitter-get-textobj "class.inner")))
+  (define-key evil-inner-text-objects-map "i" `("TS conditional" .
+    ,(evil-textobj-tree-sitter-get-textobj "conditional.inner")))
+  (define-key evil-inner-text-objects-map "f" `("TS function" .
+    ,(evil-textobj-tree-sitter-get-textobj "function.inner")))
+  (define-key evil-inner-text-objects-map "l" `("TS loop" .
+    ,(evil-textobj-tree-sitter-get-textobj "loop.inner")))
+  (define-key evil-inner-text-objects-map "P" `("TS parameter" .
+    ,(evil-textobj-tree-sitter-get-textobj "parameter.inner")))
+  (define-key evil-inner-text-objects-map "S" `("TS scopename" .
+    ,(evil-textobj-tree-sitter-get-textobj "scopename.inner"))))
+
 ;;;; UI
 (use-package which-key
   :after evil
@@ -137,57 +202,73 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 (use-package rainbow-mode)
-(use-package tree-sitter
-  :diminish
-  :config
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-  (setq-default flyspell-prog-text-faces
-    '(tree-sitter-hl-face:comment
-      tree-sitter-hl-face:doc
-      tree-sitter-hl-face:string
-      font-lock-comment-face
-      font-lock-doc-face
-      font-lock-string-face)))
-(use-package tree-sitter-langs)
 (use-package hl-todo
   :config
   (global-hl-todo-mode))
 
 ;;; Settings
-;;;; Theme
-(require 'config-emoji-modifiers)
-(load-theme 'doom-moonlight t)
-(set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
-(set-fontset-font t 'symbol "Twemoji")
-(set-face-attribute 'fringe nil :foreground "deep sky blue")
+;;;; Theme (Needs to be set when frame available)
+(let ((theme-settings (lambda ()
+        (load-theme 'doom-moonlight t)
+        (require 'config-emoji-modifiers)
+        (set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
+        (set-fontset-font t 'symbol "Twemoji")
+        (set-face-attribute 'fringe nil :foreground "deep sky blue"))))
+  (if (daemonp)
+    (add-once-hook 'server-after-make-frame-hook theme-settings)
+    (funcall theme-settings)))
 
-;;;; Configuration
-(setq inhibit-startup-message t)
-(setq initial-scratch-message nil)
-(setq create-lockfiles nil)
-(setq make-backup-files nil)
-(setq auto-save-file-name-transforms `((".*" "~/.cache/emacs/autosave/" t)))
-(setq custom-file null-device)
-(setq select-enable-clipboard nil)
+;;;; Hide welcome messages
+(setq inhibit-startup-screen t
+      initial-scratch-message nil)
+
+;;;; Reduce confirmations
+(defalias 'yes-or-no-p 'y-or-n-p)
 (setq confirm-kill-processes nil)
-(setq native-comp-async-report-warnings-errors nil)
-(setq whitespace-style '(face trailing tab-mark))
-(setq-default fill-column 80)
-(setq-default tab-width 4)
-(setq-default indent-tabs-mode nil)
-(setq eldoc-echo-area-prefer-doc-buffer t)
-(setq eldoc-minor-mode-string " Doc")
-(setq flymake-mode-line-counter-format
-  '("[" flymake-mode-line-error-counter flymake-mode-line-warning-counter "]"))
-(setq flymake-mode-line-format '(" " flymake-mode-line-counters))
-(setq ispell-dictionary "en_US")
-(setq ispell-program-name "aspell")
-(setq ispell-extra-args '("--camel-case"))
-(setq flyspell-issue-message-flag nil)
-(setq flyspell-mode-line-string nil)
+(setq kill-buffer-query-functions
+  (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;;;; Automatic spell checking
+;;;; Vim like scrolling
+(setq scroll-step 1
+      scroll-margin 0)
+
+;;;; Don't touch my files
+(setq auto-save-file-name-transforms '((".*" "~/.cache/emacs/autosave/" t))
+      make-backup-files nil
+      create-lockfiles nil
+      custom-file (make-temp-file "emacs-custom"))
+
+;;;; Don't use input methods (allows S-SPC)
+(when (eq window-system 'pgtk)
+  (pgtk-use-im-context nil))
+
+;;;; Don't overwrite system clipboard with selections
+(setq select-enable-clipboard nil)
+
+;;;; Let tab be used for completion
+(setq tab-always-indent 'complete)
+
+;;;; Built-in plugin conf
+(setq eldoc-echo-area-prefer-doc-buffer t
+      eldoc-minor-mode-string " Doc"
+      flymake-mode-line-counter-format
+  '("[" flymake-mode-line-error-counter flymake-mode-line-warning-counter "]")
+      flymake-mode-line-format '(" " flymake-mode-line-counters)
+      tramp-default-method "ssh")
+
+;;;; Formatting
+(setq-default fill-column 80
+              tab-width 4
+              indent-tabs-mode nil)
+(setq sentence-end-double-space nil
+      whitespace-style '(face trailing tab-mark))
+
+;;;; Spell checking
+(setq ispell-dictionary "en_US"
+      ispell-program-name "aspell"
+      ispell-extra-args '("--camel-case")
+      flyspell-issue-message-flag nil
+      flyspell-mode-line-string nil)
 (defun my-flyspell-buffer (&rest _) (when flyspell-mode (flyspell-buffer)))
 (add-hook 'flyspell-mode-hook #'my-flyspell-buffer)
 (advice-add 'ispell-pdict-save :after #'my-flyspell-buffer)
@@ -215,7 +296,6 @@
 
 (add-hook 'emacs-lisp-mode-hook (apply-partially 'electric-indent-local-mode 0))
 
-;;;; Diminish
 (diminish 'abbrev-mode)
 (diminish 'whitespace-mode)
 (diminish 'auto-revert-mode)
@@ -223,9 +303,8 @@
 ;;; Start server and set environment
 (let ((emacsclient "emacsclient"))
   (unless (daemonp)
-    (setq server-name (concat server-name (number-to-string (emacs-pid))))
-    (setq emacsclient (concat emacsclient
-      " --socket-name="
+    (setq server-name (concat server-name (number-to-string (emacs-pid)))
+          emacsclient (concat emacsclient " --socket-name="
       (shell-quote-argument (expand-file-name server-name server-socket-dir))))
     (server-start))
   (setenv "EDITOR" emacsclient)
