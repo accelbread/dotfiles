@@ -146,6 +146,8 @@
 (evil-set-type 'evil-backward-WORD-begin 'inclusive)
 (evil-ex-define-cmd "bd[elete]" 'kill-current-buffer)
 (evil-ex-define-cmd "wbd[elete]" 'save-kill-current-buffer)
+(evil-ex-define-cmd "bdq[uit]" 'kill-buffer-and-window)
+(evil-ex-define-cmd "wbdq[uit]" 'save-kill-buffer-and-window)
 (evil-global-set-key 'normal (kbd "z=") 'flyspell-correct-at-point)
 
 ;;;; Spell checking
@@ -271,12 +273,15 @@
                                          flymake-mode-line-warning-counter "]"))
 
 (diminish 'auto-revert-mode)
+(diminish 'company-mode)
 (diminish 'abbrev-mode)
 (diminish 'yas-minor-mode)
-(diminish 'whitespace-mode)
 (diminish 'which-key-mode)
 (diminish 'tree-sitter-mode)
-(diminish 'cargo-minor-mode)
+(with-eval-after-load 'whitespace
+  (diminish 'whitespace-mode))
+(with-eval-after-load 'cargo
+  (diminish 'cargo-minor-mode))
 
 ;;;; Local configuration
 (require 'local-config)
@@ -288,6 +293,12 @@
   (interactive)
   (save-buffer)
   (kill-current-buffer))
+
+(defun save-kill-buffer-and-window ()
+  "Save and kill current buffer and window"
+  (interactive)
+  (save-buffer)
+  (kill-buffer-and-window))
 
 (defun esp32c3 ()
   "Serial console for esp32-c3"
