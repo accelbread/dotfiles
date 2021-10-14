@@ -8,7 +8,7 @@
         evil evil-collection
         selectrum orderless marginalia company
         doom-themes rainbow-delimiters diminish hl-todo rainbow-mode
-        magit magit-todos
+        magit forge magit-todos
         flyspell-correct
         markdown-mode cmake-mode rust-mode toml-mode cargo zig-mode yaml-mode
         eglot yasnippet
@@ -207,6 +207,9 @@
 (setq magit-view-git-manual-method 'man
       transient-history-file null-device
       magit-save-repository-buffers 'dontask)
+
+(with-eval-after-load 'magit
+  (require 'forge))
 
 ;;;; LSP
 (setq eglot-stay-out-of '(company))
