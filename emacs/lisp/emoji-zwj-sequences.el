@@ -1,5 +1,5 @@
-;;; Emoji
-(provide 'config-emoji-modifiers)
+;;; Display emoji ZWJ sequences as single emoji
+(provide 'emoji-zwj-sequences)
 
 ;; setting up composition functions for emoji modifiers
 ;; https://emacs.stackexchange.com/questions/62219/how-do-i-get-colour-emoji-to-display-in-emacs/62220#62220
