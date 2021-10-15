@@ -28,17 +28,19 @@
 
 (add-to-list 'load-path (concat user-emacs-directory "lisp"))
 
-;;; Functions used for configuration
+;;; Macros used for configuration
 
-(defun add-once-hook (hook function &optional depth local)
-  "Add a function to a hook only for the next call"
-  (let ((function-wrapper
-         (lambda (self hook function)
-           (remove-hook hook (apply-partially self self hook function))
-           (funcall function))))
-    (add-hook hook
-              (apply-partially function-wrapper function-wrapper hook function)
-              depth local)))
+(eval-when-compile
+  (defmacro after-frame (&rest body)
+    "Evaluate body when frame is available."
+    `(if (= 0 (length (frame-list)))
+         (let ((wrapper (lambda (self)
+                          (remove-hook 'server-after-make-frame-hook
+                                       (apply-partially self self))
+                          ,@body)))
+           (add-hook 'server-after-make-frame-hook
+                     (apply-partially wrapper wrapper) 90))
+       ,@body)))
 
 ;;; Configuration
 
@@ -89,29 +91,7 @@
 (setq sentence-end-double-space nil
       whitespace-style '(face trailing tab-mark))
 
-;;;; Prog mode
-(add-hook 'prog-mode-hook
-          (lambda ()
-            (display-fill-column-indicator-mode)
-            (whitespace-mode)
-            (flyspell-prog-mode)
-            (show-paren-mode)
-            (rainbow-delimiters-mode)))
-
-;;;; Text mode
-(add-hook 'text-mode-hook
-          (lambda ()
-            (display-fill-column-indicator-mode)
-            (whitespace-mode)
-            (flyspell-mode)
-            (turn-on-auto-fill)))
-;;;; Etc
-(setq eldoc-echo-area-prefer-doc-buffer t
-      tramp-default-method "ssh"
-      ediff-window-setup-function 'ediff-setup-windows-plain
-      ediff-split-window-function 'split-window-horizontally)
-
-;;;; Theme
+;;;; UI
 (blink-cursor-mode 0)
 (window-divider-mode 1)
 (fringe-mode 9)
@@ -120,17 +100,33 @@
 (global-hl-todo-mode)
 (setq doom-themes-padded-modeline t)
 
-;; Needs to be set when frame available
-(let ((theme-settings
-       (lambda ()
-         (load-theme 'doom-moonlight t)
-         (set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
-         (set-fontset-font t 'symbol "Twemoji")
-         (set-face-attribute 'fringe nil :foreground "deep sky blue")
-         (require 'emoji-zwj-sequences))))
-  (if (daemonp)
-      (add-once-hook 'server-after-make-frame-hook theme-settings)
-    (funcall theme-settings)))
+(after-frame
+ (load-theme 'doom-moonlight t)
+ (set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
+ (set-fontset-font t 'symbol "Twemoji")
+ (set-face-attribute 'fringe nil :foreground "deep sky blue")
+ (require 'emoji-zwj-sequences))
+
+;;;; Prog mode
+(dolist (fn '(display-fill-column-indicator-mode
+              whitespace-mode
+              flyspell-prog-mode
+              show-paren-mode
+              rainbow-delimiters-mode))
+  (add-hook 'prog-mode-hook fn))
+
+;;;; Text mode
+(dolist (fn '(display-fill-column-indicator-mode
+              whitespace-mode
+              flyspell-mode
+              turn-on-auto-fill))
+  (add-hook 'text-mode-hook fn))
+
+;;;; Etc
+(setq eldoc-echo-area-prefer-doc-buffer t
+      tramp-default-method "ssh"
+      ediff-window-setup-function 'ediff-setup-windows-plain
+      ediff-split-window-function 'split-window-horizontally)
 
 ;;;; Evil
 (setq evil-want-integration t
@@ -192,6 +188,11 @@
 
 (global-company-mode)
 
+(define-key company-active-map [return] nil)
+(define-key company-active-map (kbd "RET") nil)
+(define-key company-active-map [tab] 'company-complete)
+(define-key company-active-map (kbd "TAB") 'company-complete)
+
 ;;;; Vterm
 (setq vterm-shell "fish"
       vterm-max-scrollback 5000
@@ -245,23 +246,34 @@
                                          font-lock-doc-face
                                          font-lock-string-face))
 
-(define-key evil-outer-text-objects-map "k" `("TS block" . ,(evil-textobj-tree-sitter-get-textobj "block.outer")))
-(define-key evil-outer-text-objects-map "c" `("TS call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer")))
-(define-key evil-outer-text-objects-map "C" `("TS class" . ,(evil-textobj-tree-sitter-get-textobj "class.outer")))
-(define-key evil-outer-text-objects-map "/" `("TS comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.outer")))
-(define-key evil-outer-text-objects-map "i" `("TS conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.outer")))
-(define-key evil-outer-text-objects-map "f" `("TS function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer")))
-(define-key evil-outer-text-objects-map "l" `("TS loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.outer")))
-(define-key evil-outer-text-objects-map "P" `("TS parameter" . ,(evil-textobj-tree-sitter-get-textobj "parameter.outer")))
-(define-key evil-outer-text-objects-map "S" `("TS statement" . ,(evil-textobj-tree-sitter-get-textobj "statement.outer")))
-(define-key evil-inner-text-objects-map "k" `("TS block" . ,(evil-textobj-tree-sitter-get-textobj "block.inner")))
-(define-key evil-inner-text-objects-map "c" `("TS call" . ,(evil-textobj-tree-sitter-get-textobj "call.inner")))
-(define-key evil-inner-text-objects-map "C" `("TS class" . ,(evil-textobj-tree-sitter-get-textobj "class.inner")))
-(define-key evil-inner-text-objects-map "i" `("TS conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.inner")))
-(define-key evil-inner-text-objects-map "f" `("TS function" . ,(evil-textobj-tree-sitter-get-textobj "function.inner")))
-(define-key evil-inner-text-objects-map "l" `("TS loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.inner")))
-(define-key evil-inner-text-objects-map "P" `("TS parameter" . ,(evil-textobj-tree-sitter-get-textobj "parameter.inner")))
-(define-key evil-inner-text-objects-map "S" `("TS scopename" . ,(evil-textobj-tree-sitter-get-textobj "scopename.inner")))
+(eval-when-compile
+  (defmacro ts-textobj-map (type key class)
+    `(define-key
+       ,(if (string= "i" type)
+            'evil-inner-text-objects-map
+          'evil-outer-text-objects-map)
+       ,key
+       '(,(concat "TS " class) .
+         (evil-textobj-tree-sitter-get-textobj
+           ,(concat class (if (string= "i" type) ".inner" ".outer")))))))
+
+(ts-textobj-map "a" "c" "comment")
+(ts-textobj-map "a" "S" "statement")
+(ts-textobj-map "a" "f" "function")
+(ts-textobj-map "i" "f" "function")
+(ts-textobj-map "a" "k" "block")
+(ts-textobj-map "i" "k" "block")
+(ts-textobj-map "a" "i" "conditional")
+(ts-textobj-map "i" "i" "conditional")
+(ts-textobj-map "a" "P" "parameter")
+(ts-textobj-map "i" "P" "parameter")
+(ts-textobj-map "a" "C" "call")
+(ts-textobj-map "i" "C" "call")
+(ts-textobj-map "a" "l" "loop")
+(ts-textobj-map "i" "l" "loop")
+(ts-textobj-map "a" "L" "class")
+(ts-textobj-map "i" "L" "class")
+(ts-textobj-map "i" "S" "scopename")
 
 ;;;; Which-key
 (setq which-key-idle-delay 0.5
