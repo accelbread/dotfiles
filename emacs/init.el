@@ -98,7 +98,9 @@
             (turn-on-auto-fill)))
 ;;;; Etc
 (setq eldoc-echo-area-prefer-doc-buffer t
-      tramp-default-method "ssh")
+      tramp-default-method "ssh"
+      ediff-window-setup-function 'ediff-setup-windows-plain
+      ediff-split-window-function 'split-window-horizontally)
 
 ;;;; Theme
 (blink-cursor-mode 0)
