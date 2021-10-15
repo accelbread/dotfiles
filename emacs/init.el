@@ -314,6 +314,12 @@
 
 ;;; Commands
 
+(defun native-compile-packages ()
+  "Native compile all packages"
+  (interactive)
+  (dolist (dir load-path)
+    (native-compile-async dir 'recursively)))
+
 (defun save-kill-current-buffer ()
   "Save and kill current buffer"
   (interactive)
