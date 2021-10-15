@@ -17,6 +17,7 @@
 
 (setq no-byte-compile t
       package-native-compile t
+      native-comp-async-report-warnings-errors nil
       package-quickstart t
       vterm-always-compile-module t)
 
@@ -40,6 +41,11 @@
               depth local)))
 
 ;;; Configuration
+
+;;;; Hide UI elements
+(tool-bar-mode 0)
+(menu-bar-mode 0)
+(scroll-bar-mode 0)
 
 ;;;; Hide welcome messages
 (setq inhibit-startup-screen t
@@ -69,6 +75,9 @@
 
 ;;;; Disable audible beeps
 (setq visual-bell 1)
+
+;;;; Allow setting frame size in pixels
+(setq frame-resize-pixelwise t)
 
 ;;;; Update files modified on disk
 (global-auto-revert-mode 1)

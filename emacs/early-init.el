@@ -1,5 +1,0 @@
-(setq frame-resize-pixelwise t)
-(setq native-comp-async-report-warnings-errors nil)
-(tool-bar-mode 0)
-(menu-bar-mode 0)
-(scroll-bar-mode 0)
