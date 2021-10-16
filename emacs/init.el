@@ -1,3 +1,5 @@
+;;; init.el -*- lexical-binding: t -*-
+
 ;;; Install packages
 
 (require 'package)
@@ -15,14 +17,10 @@
         tree-sitter tree-sitter-langs evil-textobj-tree-sitter
         which-key))
 
-(setq no-byte-compile t
-      package-native-compile t
+(setq package-native-compile t
       native-comp-async-report-warnings-errors nil
       package-quickstart t
       vterm-always-compile-module t)
-
-(advice-add 'package-quickstart-refresh :after
-            (lambda (&rest _) (native-compile-async package-quickstart-file)))
 
 (package-install-selected-packages t)
 
@@ -30,17 +28,16 @@
 
 ;;; Macros used for configuration
 
-(eval-when-compile
-  (defmacro after-frame (&rest body)
-    "Evaluate body when frame is available."
-    `(if (= 0 (length (frame-list)))
-         (let ((wrapper (lambda (self)
-                          (remove-hook 'server-after-make-frame-hook
-                                       (apply-partially self self))
-                          ,@body)))
-           (add-hook 'server-after-make-frame-hook
-                     (apply-partially wrapper wrapper) 90))
-       ,@body)))
+(defmacro after-frame (&rest body)
+  "Evaluate body when frame is available."
+  `(if (daemonp)
+       (let ((wrapper (lambda (self)
+                        (remove-hook 'server-after-make-frame-hook
+                                     (apply-partially self self))
+                        ,@body)))
+         (add-hook 'server-after-make-frame-hook
+                   (apply-partially wrapper wrapper) 90))
+     ,@body))
 
 ;;; Configuration
 
@@ -76,7 +73,7 @@
 (setq select-enable-clipboard nil)
 
 ;;;; Disable audible beeps
-(setq visual-bell 1)
+(setq visible-bell 1)
 
 ;;;; Allow setting frame size in pixels
 (setq frame-resize-pixelwise t)
@@ -106,6 +103,9 @@
  (set-fontset-font t 'symbol "Twemoji")
  (set-face-attribute 'fringe nil :foreground "deep sky blue")
  (require 'emoji-zwj-sequences))
+
+;;;; Auto close pairs
+(electric-pair-mode)
 
 ;;;; Prog mode
 (dolist (fn '(display-fill-column-indicator-mode
@@ -202,7 +202,7 @@
 (evil-define-key '(normal insert) vterm-mode-map (kbd "C-c ESC")
   'vterm-send-escape)
 
-;; Start server and set environment
+;;;;; Start server and set environment
 (require 'server)
 (let ((emacsclient "emacsclient"))
   (unless (daemonp)
@@ -246,38 +246,36 @@
                                          font-lock-doc-face
                                          font-lock-string-face))
 
-(eval-when-compile
-  (defmacro ts-textobj-map (type key class)
-    `(define-key
-       ,(if (string= "i" type)
-            'evil-inner-text-objects-map
-          'evil-outer-text-objects-map)
-       ,key
-       '(,(concat "TS " class) .
-         (evil-textobj-tree-sitter-get-textobj
-           ,(concat class (if (string= "i" type) ".inner" ".outer")))))))
-
-(ts-textobj-map "a" "c" "comment")
-(ts-textobj-map "a" "S" "statement")
-(ts-textobj-map "a" "f" "function")
-(ts-textobj-map "i" "f" "function")
-(ts-textobj-map "a" "k" "block")
-(ts-textobj-map "i" "k" "block")
-(ts-textobj-map "a" "i" "conditional")
-(ts-textobj-map "i" "i" "conditional")
-(ts-textobj-map "a" "P" "parameter")
-(ts-textobj-map "i" "P" "parameter")
-(ts-textobj-map "a" "C" "call")
-(ts-textobj-map "i" "C" "call")
-(ts-textobj-map "a" "l" "loop")
-(ts-textobj-map "i" "l" "loop")
-(ts-textobj-map "a" "L" "class")
-(ts-textobj-map "i" "L" "class")
-(ts-textobj-map "i" "S" "scopename")
+(pcase-dolist (`(,type ,key ,class)
+               '((a "c" "comment")
+                 (a "S" "statement")
+                 (a "f" "function")
+                 (i "f" "function")
+                 (a "k" "block")
+                 (i "k" "block")
+                 (a "i" "conditional")
+                 (i "i" "conditional")
+                 (a "P" "parameter")
+                 (i "P" "parameter")
+                 (a "C" "call")
+                 (i "C" "call")
+                 (a "l" "loop")
+                 (i "l" "loop")
+                 (a "L" "class")
+                 (i "L" "class")
+                 (i "S" "scopename")))
+  (let ((map (pcase type
+               ('a evil-outer-text-objects-map)
+               ('i evil-inner-text-objects-map)))
+        (desc (concat "TS " class))
+        (query (concat class (pcase type ('a ".outer") ('i ".inner")))))
+    (define-key map key
+      `(,desc . ,(eval `(evil-textobj-tree-sitter-get-textobj ,query))))))
 
 ;;;; Which-key
 (setq which-key-idle-delay 0.5
-      which-key-compute-remaps t)
+      which-key-compute-remaps t
+      which-key-sort-order 'which-key-description-order)
 (which-key-mode)
 
 ;;;; Markdown
@@ -309,16 +307,13 @@
 (with-eval-after-load 'cargo
   (diminish 'cargo-minor-mode))
 
-;;;; Local configuration
-(require 'local-config)
+;;; Local configuration
+
+(let ((local-config (concat user-emacs-directory "local-config.el")))
+  (if (file-exists-p local-config)
+      (load-file local-config)))
 
 ;;; Commands
-
-(defun native-compile-packages ()
-  "Native compile all packages"
-  (interactive)
-  (dolist (dir load-path)
-    (native-compile-async dir 'recursively)))
 
 (defun save-kill-current-buffer ()
   "Save and kill current buffer"

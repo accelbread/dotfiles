@@ -1,4 +1,4 @@
-;;; Display emoji ZWJ sequences as single emoji
+;;; emoji-zwj-sequences.el --- Display emoji ZWJ sequences -*- lexical-binding: t -*-
 (provide 'emoji-zwj-sequences)
 
 ;; setting up composition functions for emoji modifiers
