@@ -6,16 +6,14 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '(vterm
-        evil evil-collection
+      '(vterm pdf-tools which-key
+        evil evil-collection flyspell-correct
         selectrum orderless marginalia company
         doom-themes rainbow-delimiters diminish hl-todo rainbow-mode
-        magit forge magit-todos
-        flyspell-correct
         markdown-mode cmake-mode rust-mode toml-mode cargo zig-mode yaml-mode
-        eglot yasnippet
         tree-sitter tree-sitter-langs evil-textobj-tree-sitter
-        which-key))
+        eglot yasnippet
+        magit forge magit-todos))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -23,8 +21,6 @@
       vterm-always-compile-module t)
 
 (package-install-selected-packages t)
-
-(add-to-list 'load-path (concat user-emacs-directory "lisp"))
 
 ;;; Macros used for configuration
 
@@ -48,7 +44,8 @@
 
 ;;;; Hide welcome messages
 (setq inhibit-startup-screen t
-      initial-scratch-message nil)
+      initial-scratch-message nil
+      server-client-instructions nil)
 
 ;;;; Reduce confirmations
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -86,23 +83,23 @@
               tab-width 4
               indent-tabs-mode nil)
 (setq sentence-end-double-space nil
-      whitespace-style '(face trailing tab-mark))
+      whitespace-style '(face trailing tab-mark missing-newline-at-eof))
 
 ;;;; UI
 (blink-cursor-mode 0)
 (window-divider-mode 1)
 (fringe-mode 9)
 (column-number-mode 1)
-
 (global-hl-todo-mode)
-(setq doom-themes-padded-modeline t)
+
+(setq mode-line-compact 'long
+      doom-themes-padded-modeline t)
 
 (after-frame
  (load-theme 'doom-moonlight t)
  (set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
- (set-fontset-font t 'symbol "Twemoji")
- (set-face-attribute 'fringe nil :foreground "deep sky blue")
- (require 'emoji-zwj-sequences))
+ (set-fontset-font t 'emoji "Twemoji")
+ (set-face-attribute 'fringe nil :foreground "deep sky blue"))
 
 ;;;; Auto close pairs
 (electric-pair-mode)
@@ -111,7 +108,6 @@
 (dolist (fn '(display-fill-column-indicator-mode
               whitespace-mode
               flyspell-prog-mode
-              show-paren-mode
               rainbow-delimiters-mode))
   (add-hook 'prog-mode-hook fn))
 
@@ -151,11 +147,11 @@
 
 (evil-set-type 'evil-backward-word-begin 'inclusive)
 (evil-set-type 'evil-backward-WORD-begin 'inclusive)
-(evil-ex-define-cmd "bd[elete]" 'kill-current-buffer)
-(evil-ex-define-cmd "wbd[elete]" 'save-kill-current-buffer)
-(evil-ex-define-cmd "bdq[uit]" 'kill-buffer-and-window)
-(evil-ex-define-cmd "wbdq[uit]" 'save-kill-buffer-and-window)
-(evil-global-set-key 'normal (kbd "z=") 'flyspell-correct-at-point)
+(evil-ex-define-cmd "bd[elete]" #'kill-current-buffer)
+(evil-ex-define-cmd "wbd[elete]" #'save-kill-current-buffer)
+(evil-ex-define-cmd "bdq[uit]" #'kill-buffer-and-window)
+(evil-ex-define-cmd "wbdq[uit]" #'save-kill-buffer-and-window)
+(evil-global-set-key 'normal (kbd "z=") #'flyspell-correct-at-point)
 
 ;;;; Spell checking
 (setq ispell-dictionary "en_US"
@@ -190,8 +186,8 @@
 
 (define-key company-active-map [return] nil)
 (define-key company-active-map (kbd "RET") nil)
-(define-key company-active-map [tab] 'company-complete)
-(define-key company-active-map (kbd "TAB") 'company-complete)
+(define-key company-active-map [tab] #'company-complete)
+(define-key company-active-map (kbd "TAB") #'company-complete)
 
 ;;;; Vterm
 (setq vterm-shell "fish"
@@ -228,17 +224,17 @@
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer"))))
 
-(add-hook 'c-mode-hook 'eglot-ensure)
-(add-hook 'rust-mode-hook 'eglot-ensure)
-(add-hook 'zig-mode-hook 'eglot-ensure)
-(add-hook 'python-mode-hook 'eglot-ensure)
+(add-hook 'c-mode-hook #'eglot-ensure)
+(add-hook 'rust-mode-hook #'eglot-ensure)
+(add-hook 'zig-mode-hook #'eglot-ensure)
+(add-hook 'python-mode-hook #'eglot-ensure)
 
 (yas-global-mode)
 
 ;;;; Treesitter
 (global-tree-sitter-mode)
 
-(add-hook 'tree-sitter-after-on-hook 'tree-sitter-hl-mode)
+(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 (setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
                                          tree-sitter-hl-face:doc
                                          tree-sitter-hl-face:string
@@ -287,8 +283,11 @@
 
 ;;;; Rust
 (setq rust-format-on-save t)
-(add-hook 'rust-mode-hook 'cargo-minor-mode)
-(add-hook 'toml-mode-hook 'cargo-minor-mode)
+(add-hook 'rust-mode-hook #'cargo-minor-mode)
+(add-hook 'toml-mode-hook #'cargo-minor-mode)
+
+;;;; PDF
+(pdf-loader-install)
 
 ;;;; Reduce minor mode indicators
 (setq eldoc-minor-mode-string " Doc"
@@ -306,6 +305,8 @@
   (diminish 'whitespace-mode))
 (with-eval-after-load 'cargo
   (diminish 'cargo-minor-mode))
+(with-eval-after-load 'pdf-view
+  (diminish 'pdf-view-midnight-minor-mode))
 
 ;;; Local configuration
 
