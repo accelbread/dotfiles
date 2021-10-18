@@ -90,6 +90,7 @@
 (window-divider-mode 1)
 (fringe-mode 9)
 (column-number-mode 1)
+(global-prettify-symbols-mode)
 (global-hl-todo-mode)
 
 (setq mode-line-compact 'long
