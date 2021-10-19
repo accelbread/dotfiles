@@ -1,18 +1,21 @@
 ;;; init.el -*- lexical-binding: t -*-
 
+;;; Temporarily disable GC
+(setq gc-cons-threshold most-positive-fixnum)
+
 ;;; Install packages
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '(vterm pdf-tools which-key
+      '(vterm which-key gcmh pdf-tools theme-magic
         evil evil-collection flyspell-correct
-        selectrum orderless marginalia company
+        company selectrum orderless marginalia
         doom-themes rainbow-delimiters diminish hl-todo rainbow-mode
-        markdown-mode cmake-mode rust-mode toml-mode cargo zig-mode yaml-mode
-        tree-sitter tree-sitter-langs evil-textobj-tree-sitter
-        eglot yasnippet
+        markdown-mode rust-mode cargo zig-mode fish-mode
+        cmake-mode toml-mode yaml-mode
+        eglot yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter
         magit forge magit-todos))
 
 (setq package-native-compile t
@@ -22,8 +25,7 @@
 
 (package-install-selected-packages t)
 
-;;; Macros used for configuration
-
+;;; Config macros
 (defmacro after-frame (&rest body)
   "Evaluate body when frame is available."
   `(if (daemonp)
@@ -35,57 +37,59 @@
                    (apply-partially wrapper wrapper) 90))
      ,@body))
 
-;;; Configuration
-
-;;;; Hide UI elements
+;;; Hide UI elements
 (tool-bar-mode 0)
 (menu-bar-mode 0)
 (scroll-bar-mode 0)
 
-;;;; Hide welcome messages
+;;; Hide welcome messages
 (setq inhibit-startup-screen t
       initial-scratch-message nil
       server-client-instructions nil)
 
-;;;; Reduce confirmations
+;;; Reduce confirmations
 (defalias 'yes-or-no-p 'y-or-n-p)
-(setq confirm-kill-processes nil)
-(setq kill-buffer-query-functions
-      (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
+(setq confirm-kill-processes nil
+      kill-buffer-query-functions
+      (delq 'process-kill-buffer-query-function kill-buffer-query-functions)
+      auth-source-save-behavior nil)
 
-;;;; Make moving past view edge not jump
+;;; Make moving past view edge not jump
 (setq scroll-step 1
       scroll-margin 0)
 
-;;;; Prevent misc file creation
+;;; Prevent misc file creation
 (setq auto-save-file-name-transforms '((".*" "~/.cache/emacs/autosave/" t))
       make-backup-files nil
       create-lockfiles nil
-      custom-file (make-temp-file "emacs-custom"))
+      custom-file null-device)
 
-;;;; Prevent input method from consuming keys
+;;; Prevent input method from consuming keys
 (when (eq window-system 'pgtk) (pgtk-use-im-context nil))
 
-;;;; Disable overwriting of system clipboard with selection
+;;; Disable overwriting of system clipboard with selection
 (setq select-enable-clipboard nil)
 
-;;;; Disable audible beeps
-(setq visible-bell 1)
-
-;;;; Allow setting frame size in pixels
+;;; Allow setting frame size in pixels
 (setq frame-resize-pixelwise t)
 
-;;;; Update files modified on disk
+;;; Update files modified on disk
 (global-auto-revert-mode 1)
+(diminish 'auto-revert-mode)
 
-;;;; Formatting
+;;; Hide abbrev mode
+(diminish 'abbrev-mode)
+
+;;; Formatting
 (setq-default fill-column 80
               tab-width 4
               indent-tabs-mode nil)
 (setq sentence-end-double-space nil
       whitespace-style '(face trailing tab-mark missing-newline-at-eof))
+(with-eval-after-load 'whitespace
+  (diminish 'whitespace-mode))
 
-;;;; UI
+;;; UI
 (blink-cursor-mode 0)
 (window-divider-mode 1)
 (fringe-mode 9)
@@ -98,34 +102,42 @@
 
 (after-frame
  (load-theme 'doom-moonlight t)
+ (doom-themes-visual-bell-config)
+ (set-face-attribute 'fringe nil :foreground "deep sky blue")
  (set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
- (set-fontset-font t 'emoji "Twemoji")
- (set-face-attribute 'fringe nil :foreground "deep sky blue"))
+ (set-fontset-font t 'emoji "Twemoji"))
 
-;;;; Auto close pairs
+;;; Auto close pairs
 (electric-pair-mode)
 
-;;;; Prog mode
+;;; Prog mode
 (dolist (fn '(display-fill-column-indicator-mode
               whitespace-mode
               flyspell-prog-mode
               rainbow-delimiters-mode))
   (add-hook 'prog-mode-hook fn))
 
-;;;; Text mode
+;;; Text mode
 (dolist (fn '(display-fill-column-indicator-mode
               whitespace-mode
               flyspell-mode
               turn-on-auto-fill))
   (add-hook 'text-mode-hook fn))
 
-;;;; Etc
+;;; Eldoc
 (setq eldoc-echo-area-prefer-doc-buffer t
-      tramp-default-method "ssh"
-      ediff-window-setup-function 'ediff-setup-windows-plain
+      eldoc-minor-mode-string " Doc")
+
+;;; Ediff
+(setq ediff-window-setup-function 'ediff-setup-windows-plain
       ediff-split-window-function 'split-window-horizontally)
 
-;;;; Evil
+;;; Tramp
+(with-eval-after-load 'tramp
+  (setq tramp-default-method-alist `((,tramp-local-host-regexp nil "sudo"))
+        tramp-default-method "ssh"))
+
+;;; Evil
 (setq evil-want-integration t
       evil-want-keybinding nil
       evil-want-minibuffer t
@@ -154,7 +166,7 @@
 (evil-ex-define-cmd "wbdq[uit]" #'save-kill-buffer-and-window)
 (evil-global-set-key 'normal (kbd "z=") #'flyspell-correct-at-point)
 
-;;;; Spell checking
+;;; Spell checking
 (setq ispell-dictionary "en_US"
       ispell-program-name "aspell"
       ispell-extra-args '("--camel-case")
@@ -170,7 +182,7 @@
 (advice-add 'evil-paste-before :after #'my-flyspell-buffer)
 (advice-add 'evil-paste-after :after #'my-flyspell-buffer)
 
-;;;; Completion
+;;; Completion
 (setq completion-styles '(orderless))
 (selectrum-mode)
 (marginalia-mode)
@@ -184,13 +196,19 @@
                                     company-dabbrev company-ispell)))
 
 (global-company-mode)
+(diminish 'company-mode)
 
 (define-key company-active-map [return] nil)
 (define-key company-active-map (kbd "RET") nil)
 (define-key company-active-map [tab] #'company-complete)
 (define-key company-active-map (kbd "TAB") #'company-complete)
 
-;;;; Vterm
+;;; Flymake
+(setq flymake-mode-line-format '(" " flymake-mode-line-counters)
+      flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
+                                         flymake-mode-line-warning-counter "]"))
+
+;;; Vterm
 (setq vterm-shell "fish"
       vterm-max-scrollback 5000
       vterm-timer-delay 0.01
@@ -199,7 +217,7 @@
 (evil-define-key '(normal insert) vterm-mode-map (kbd "C-c ESC")
   'vterm-send-escape)
 
-;;;;; Start server and set environment
+;;;; Start server and set environment
 (require 'server)
 (let ((emacsclient "emacsclient"))
   (unless (daemonp)
@@ -212,7 +230,7 @@
   (setenv "EDITOR" emacsclient)
   (setenv "VISUAL" emacsclient))
 
-;;;; Magit
+;;; Magit
 (setq magit-view-git-manual-method 'man
       transient-history-file null-device
       magit-save-repository-buffers 'dontask)
@@ -220,10 +238,12 @@
 (with-eval-after-load 'magit
   (require 'forge))
 
-;;;; LSP
+;;; LSP
 (setq eglot-stay-out-of '(company))
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer"))))
+(setq-default eglot-workspace-configuration
+              '((rust-analyzer (checkOnSave (command . "clippy")))))
 
 (add-hook 'c-mode-hook #'eglot-ensure)
 (add-hook 'rust-mode-hook #'eglot-ensure)
@@ -231,9 +251,11 @@
 (add-hook 'python-mode-hook #'eglot-ensure)
 
 (yas-global-mode)
+(diminish 'yas-minor-mode)
 
-;;;; Treesitter
+;;; Treesitter
 (global-tree-sitter-mode)
+(diminish 'tree-sitter-mode)
 
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 (setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
@@ -269,43 +291,30 @@
     (define-key map key
       `(,desc . ,(eval `(evil-textobj-tree-sitter-get-textobj ,query))))))
 
-;;;; Which-key
+;;; Which-key
 (setq which-key-idle-delay 0.5
       which-key-compute-remaps t
       which-key-sort-order 'which-key-description-order)
 (which-key-mode)
+(diminish 'which-key-mode)
 
-;;;; Markdown
+;;; Markdown
 (setq markdown-asymmetric-header t
       markdown-fontify-code-blocks-natively t
+      markdown-ordered-list-enumeration nil
       markdown-unordered-list-item-prefix nil
       markdown-disable-tooltip-prompt t
       markdown-command '("pandoc" "--from=markdown" "--to=html5"))
 
-;;;; Rust
+;;; Rust
 (setq rust-format-on-save t)
 (add-hook 'rust-mode-hook #'cargo-minor-mode)
 (add-hook 'toml-mode-hook #'cargo-minor-mode)
-
-;;;; PDF
-(pdf-loader-install)
-
-;;;; Reduce minor mode indicators
-(setq eldoc-minor-mode-string " Doc"
-      flymake-mode-line-format '(" " flymake-mode-line-counters)
-      flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
-                                         flymake-mode-line-warning-counter "]"))
-
-(diminish 'auto-revert-mode)
-(diminish 'company-mode)
-(diminish 'abbrev-mode)
-(diminish 'yas-minor-mode)
-(diminish 'which-key-mode)
-(diminish 'tree-sitter-mode)
-(with-eval-after-load 'whitespace
-  (diminish 'whitespace-mode))
 (with-eval-after-load 'cargo
   (diminish 'cargo-minor-mode))
+
+;;; PDF
+(pdf-loader-install)
 (with-eval-after-load 'pdf-view
   (diminish 'pdf-view-midnight-minor-mode))
 
@@ -333,3 +342,9 @@
   "Serial console for esp32-c3"
   (interactive)
   (serial-term (serial-read-name) 115200))
+
+;;; Garbage collect when idle
+(setq gcmh-idle-delay 'auto
+      gcmh-auto-idle-delay-factor 10)
+(gcmh-mode)
+(diminish 'gcmh-mode)
