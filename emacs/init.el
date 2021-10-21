@@ -1,22 +1,18 @@
-;;; init.el -*- lexical-binding: t -*-
-
-;;; Temporarily disable GC
-(setq gc-cons-threshold most-positive-fixnum)
+;;; init.el -*- lexical-binding: t; -*-
 
 ;;; Install packages
-
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '(vterm which-key gcmh pdf-tools theme-magic
-        evil evil-collection flyspell-correct
-        company selectrum orderless marginalia
-        doom-themes rainbow-delimiters diminish hl-todo rainbow-mode
-        markdown-mode rust-mode cargo zig-mode fish-mode
-        cmake-mode toml-mode yaml-mode
-        eglot yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter
-        magit forge magit-todos))
+      '( vterm which-key gcmh pdf-tools theme-magic
+         evil evil-collection flyspell-correct
+         company selectrum orderless marginalia
+         doom-themes rainbow-delimiters diminish hl-todo rainbow-mode
+         markdown-mode rust-mode cargo zig-mode fish-mode
+         cmake-mode toml-mode yaml-mode git-modes
+         eglot yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter
+         magit forge magit-todos))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -37,11 +33,6 @@
                    (apply-partially wrapper wrapper) 90))
      ,@body))
 
-;;; Hide UI elements
-(tool-bar-mode 0)
-(menu-bar-mode 0)
-(scroll-bar-mode 0)
-
 ;;; Hide welcome messages
 (setq inhibit-startup-screen t
       initial-scratch-message nil
@@ -55,7 +46,7 @@
       auth-source-save-behavior nil)
 
 ;;; Make moving past view edge not jump
-(setq scroll-step 1
+(setq scroll-conservatively 101
       scroll-margin 0)
 
 ;;; Prevent misc file creation
@@ -70,8 +61,9 @@
 ;;; Disable overwriting of system clipboard with selection
 (setq select-enable-clipboard nil)
 
-;;; Allow setting frame size in pixels
-(setq frame-resize-pixelwise t)
+;;; Leave frame size alone
+(setq frame-resize-pixelwise t
+      frame-inhibit-implied-resize t)
 
 ;;; Update files modified on disk
 (global-auto-revert-mode 1)
@@ -83,14 +75,15 @@
 ;;; Formatting
 (setq-default fill-column 80
               tab-width 4
-              indent-tabs-mode nil)
+              indent-tabs-mode nil
+              tab-always-indent nil)
 (setq sentence-end-double-space nil
       whitespace-style '(face trailing tab-mark missing-newline-at-eof))
 (with-eval-after-load 'whitespace
   (diminish 'whitespace-mode))
 
 ;;; UI
-(blink-cursor-mode 0)
+(blink-cursor-mode -1)
 (window-divider-mode 1)
 (fringe-mode 9)
 (column-number-mode 1)
@@ -160,11 +153,12 @@
 
 (evil-set-type 'evil-backward-word-begin 'inclusive)
 (evil-set-type 'evil-backward-WORD-begin 'inclusive)
+
 (evil-ex-define-cmd "bd[elete]" #'kill-current-buffer)
 (evil-ex-define-cmd "wbd[elete]" #'save-kill-current-buffer)
 (evil-ex-define-cmd "bdq[uit]" #'kill-buffer-and-window)
 (evil-ex-define-cmd "wbdq[uit]" #'save-kill-buffer-and-window)
-(evil-global-set-key 'normal (kbd "z=") #'flyspell-correct-at-point)
+(evil-global-set-key 'normal ["z ="] #'flyspell-correct-at-point)
 
 ;;; Spell checking
 (setq ispell-dictionary "en_US"
@@ -173,14 +167,14 @@
       flyspell-issue-message-flag nil
       flyspell-mode-line-string nil)
 
-(defun my-flyspell-buffer (&rest _)
+(defun flyspell-buffer-if-enabled (&rest _)
   "Run flyspell-buffer only if flyspell-mode is enabled."
   (when flyspell-mode (flyspell-buffer)))
 
-(add-hook 'flyspell-mode-hook #'my-flyspell-buffer)
-(advice-add 'ispell-pdict-save :after #'my-flyspell-buffer)
-(advice-add 'evil-paste-before :after #'my-flyspell-buffer)
-(advice-add 'evil-paste-after :after #'my-flyspell-buffer)
+(add-hook 'flyspell-mode-hook #'flyspell-buffer-if-enabled)
+(advice-add 'ispell-pdict-save :after #'flyspell-buffer-if-enabled)
+(advice-add 'evil-paste-before :after #'flyspell-buffer-if-enabled)
+(advice-add 'evil-paste-after :after #'flyspell-buffer-if-enabled)
 
 ;;; Completion
 (setq completion-styles '(orderless))
@@ -199,9 +193,9 @@
 (diminish 'company-mode)
 
 (define-key company-active-map [return] nil)
-(define-key company-active-map (kbd "RET") nil)
+(define-key company-active-map ["RET"] nil)
 (define-key company-active-map [tab] #'company-complete)
-(define-key company-active-map (kbd "TAB") #'company-complete)
+(define-key company-active-map ["TAB"] #'company-complete)
 
 ;;; Flymake
 (setq flymake-mode-line-format '(" " flymake-mode-line-counters)
@@ -214,21 +208,16 @@
       vterm-timer-delay 0.01
       vterm-buffer-name-string "vterm:%s")
 
-(evil-define-key '(normal insert) vterm-mode-map (kbd "C-c ESC")
-  'vterm-send-escape)
+(evil-define-key '(normal insert) vterm-mode-map ["C-c ESC"] 'vterm-send-escape)
 
 ;;;; Start server and set environment
 (require 'server)
-(let ((emacsclient "emacsclient"))
-  (unless (daemonp)
-    (setq server-name (concat server-name (number-to-string (emacs-pid)))
-          emacsclient (concat emacsclient " --socket-name="
-                              (shell-quote-argument
-                               (expand-file-name server-name
-                                                 server-socket-dir))))
-    (server-start))
-  (setenv "EDITOR" emacsclient)
-  (setenv "VISUAL" emacsclient))
+(unless (daemonp)
+  (setq server-name (concat server-name (number-to-string (emacs-pid))))
+  (server-start))
+(setenv "EMACS_SOCKET_NAME" (expand-file-name server-name server-socket-dir))
+(setenv "EDITOR" "emacsclient")
+(setenv "VISUAL" "emacsclient")
 
 ;;; Magit
 (setq magit-view-git-manual-method 'man
@@ -257,7 +246,6 @@
 (global-tree-sitter-mode)
 (diminish 'tree-sitter-mode)
 
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 (setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
                                          tree-sitter-hl-face:doc
                                          tree-sitter-hl-face:string
@@ -294,7 +282,9 @@
 ;;; Which-key
 (setq which-key-idle-delay 0.5
       which-key-compute-remaps t
-      which-key-sort-order 'which-key-description-order)
+      which-key-sort-order 'which-key-description-order
+      which-key-side-window-max-height 0.5
+      which-key-unicode-correction 0)
 (which-key-mode)
 (diminish 'which-key-mode)
 
@@ -313,19 +303,23 @@
 (with-eval-after-load 'cargo
   (diminish 'cargo-minor-mode))
 
+;;; C
+(with-eval-after-load 'cc-mode
+  (setf (alist-get 'other c-default-style) "stroustrup")
+  (add-hook 'c-mode-hook
+            (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0]))))
+
 ;;; PDF
 (pdf-loader-install)
 (with-eval-after-load 'pdf-view
   (diminish 'pdf-view-midnight-minor-mode))
 
 ;;; Local configuration
-
 (let ((local-config (concat user-emacs-directory "local-config.el")))
   (if (file-exists-p local-config)
       (load-file local-config)))
 
 ;;; Commands
-
 (defun save-kill-current-buffer ()
   "Save and kill current buffer"
   (interactive)
