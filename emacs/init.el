@@ -5,10 +5,10 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '( vterm which-key gcmh pdf-tools theme-magic
+      '( vterm which-key gcmh auto-minor-mode openwith pdf-tools theme-magic
          evil evil-collection flyspell-correct
          company selectrum orderless marginalia
-         doom-themes rainbow-delimiters diminish hl-todo rainbow-mode
+         diminish mode-line-bell rainbow-delimiters hl-todo rainbow-mode
          markdown-mode rust-mode cargo zig-mode fish-mode
          cmake-mode toml-mode yaml-mode git-modes
          eglot yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter
@@ -21,7 +21,7 @@
 
 (package-install-selected-packages t)
 
-;;; Config macros
+;;; Config utils
 (defmacro after-frame (&rest body)
   "Evaluate body when frame is available."
   `(if (daemonp)
@@ -32,6 +32,11 @@
          (add-hook 'server-after-make-frame-hook
                    (apply-partially wrapper wrapper) 90))
      ,@body))
+
+(defun y-or-n-p-always-y (orig-fun &rest args)
+  "Run function with y for y-or-n-p prompts."
+  (cl-letf (((symbol-function 'y-or-n-p) (lambda (prompt) t)))
+    (apply orig-fun args)))
 
 ;;; Hide welcome messages
 (setq inhibit-startup-screen t
@@ -87,18 +92,16 @@
 (window-divider-mode 1)
 (fringe-mode 9)
 (column-number-mode 1)
+(mode-line-bell-mode)
 (global-prettify-symbols-mode)
 (global-hl-todo-mode)
 
-(setq mode-line-compact 'long
-      doom-themes-padded-modeline t)
+(setq mode-line-compact 'long)
 
 (after-frame
- (load-theme 'doom-moonlight t)
- (doom-themes-visual-bell-config)
- (set-face-attribute 'fringe nil :foreground "deep sky blue")
- (set-face-attribute 'default nil :font "DejaVu Sans Mono-10")
- (set-fontset-font t 'emoji "Twemoji"))
+ (load-theme 'my-purple t)
+ (set-face-attribute 'default nil :family "DejaVu Sans Mono" :height 100)
+ (set-fontset-font t 'emoji "Twemoji" nil 'prepend))
 
 ;;; Auto close pairs
 (electric-pair-mode)
@@ -117,6 +120,9 @@
               turn-on-auto-fill))
   (add-hook 'text-mode-hook fn))
 
+;;; Enable rainbow mode for theme files
+(add-to-list 'auto-minor-mode-alist '("-theme\\.el\\'" . rainbow-mode))
+
 ;;; Eldoc
 (setq eldoc-echo-area-prefer-doc-buffer t
       eldoc-minor-mode-string " Doc")
@@ -124,6 +130,8 @@
 ;;; Ediff
 (setq ediff-window-setup-function 'ediff-setup-windows-plain
       ediff-split-window-function 'split-window-horizontally)
+
+(advice-add 'ediff-quit :around #'y-or-n-p-always-y)
 
 ;;; Tramp
 (with-eval-after-load 'tramp
@@ -175,6 +183,13 @@
 (advice-add 'ispell-pdict-save :after #'flyspell-buffer-if-enabled)
 (advice-add 'evil-paste-before :after #'flyspell-buffer-if-enabled)
 (advice-add 'evil-paste-after :after #'flyspell-buffer-if-enabled)
+
+(setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
+                                         tree-sitter-hl-face:doc
+                                         tree-sitter-hl-face:string
+                                         font-lock-comment-face
+                                         font-lock-doc-face
+                                         font-lock-string-face))
 
 ;;; Completion
 (setq completion-styles '(orderless))
@@ -246,12 +261,7 @@
 (global-tree-sitter-mode)
 (diminish 'tree-sitter-mode)
 
-(setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
-                                         tree-sitter-hl-face:doc
-                                         tree-sitter-hl-face:string
-                                         font-lock-comment-face
-                                         font-lock-doc-face
-                                         font-lock-string-face))
+(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
 (pcase-dolist (`(,type ,key ,class)
                '((a "c" "comment")
@@ -313,6 +323,19 @@
 (pdf-loader-install)
 (with-eval-after-load 'pdf-view
   (diminish 'pdf-view-midnight-minor-mode))
+
+;;; Open outside Emacs
+(setq openwith-associations
+      '(("\\.mkv\\'" "mpv" (file))))
+(openwith-mode 1)
+
+(advice-add 'abort-if-file-too-large :around
+            (lambda (orig-fun size op-type filename &optional offer-raw)
+              "Skip size warning for externally handled file types."
+              (unless (string-match-p
+                       (mapconcat 'car openwith-associations "\\|")
+                       filename)
+                (funcall orig-fun size op-type filename offer-raw))))
 
 ;;; Local configuration
 (let ((local-config (concat user-emacs-directory "local-config.el")))
