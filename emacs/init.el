@@ -5,8 +5,9 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '( vterm which-key gcmh auto-minor-mode openwith pdf-tools theme-magic
+      '( which-key gcmh auto-minor-mode openwith pdf-tools theme-magic
          evil evil-collection flyspell-correct
+         fish-completion vterm eshell-vterm eshell-syntax-highlighting
          company selectrum orderless marginalia
          diminish mode-line-bell rainbow-delimiters hl-todo rainbow-mode
          markdown-mode rust-mode cargo zig-mode fish-mode
@@ -216,6 +217,21 @@
 (setq flymake-mode-line-format '(" " flymake-mode-line-counters)
       flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
                                          flymake-mode-line-warning-counter "]"))
+
+;;; Eshell
+(setq eshell-modules-list
+      '( eshell-alias eshell-basic eshell-cmpl eshell-dirs eshell-hist eshell-ls
+         eshell-pred eshell-prompt eshell-term eshell-tramp eshell-unix)
+      eshell-error-if-no-glob t
+      eshell-glob-include-dot-dot nil
+      eshell-glob-include-dot-files t
+      eshell-ask-to-save-last-dir nil)
+
+(add-hook 'eshell-mode-hook 'fish-completion-mode)
+
+(with-eval-after-load 'eshell
+  (eshell-vterm-mode)
+  (eshell-syntax-highlighting-global-mode))
 
 ;;; Vterm
 (setq vterm-shell "fish"
