@@ -227,7 +227,8 @@
       eshell-glob-include-dot-files t
       eshell-ask-to-save-last-dir nil)
 
-(add-hook 'eshell-mode-hook 'fish-completion-mode)
+(add-hook 'eshell-mode-hook #'fish-completion-mode)
+(add-hook 'eshell-mode-hook (lambda () (company-mode -1)))
 
 (with-eval-after-load 'eshell
   (eshell-vterm-mode)
