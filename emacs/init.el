@@ -228,11 +228,12 @@
 
 (setq company-minimum-prefix-length 1
       company-idle-delay 0.0
+      company-require-match nil
       company-dabbrev-downcase nil
       company-dabbrev-ignore-case nil
       company-backends '(company-files
-                         (:separate company-yasnippet company-capf
-                                    company-dabbrev company-ispell)))
+                         company-capf
+                         (:separate company-dabbrev company-ispell)))
 
 (global-company-mode)
 (diminish #'company-mode)
@@ -248,18 +249,16 @@
       flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
                                          flymake-mode-line-warning-counter "]"))
 
-;;; Shell
+;;; Eshell
 
 (setq eshell-modules-list '( eshell-alias eshell-basic eshell-cmpl eshell-dirs
                              eshell-glob eshell-hist eshell-ls eshell-pred
                              eshell-prompt eshell-term eshell-tramp eshell-unix)
       eshell-error-if-no-glob t
       eshell-glob-include-dot-dot nil
-      eshell-glob-include-dot-files t
       eshell-ask-to-save-last-dir nil)
 
 (add-hook 'eshell-mode-hook #'fish-completion-mode)
-(add-hook 'eshell-mode-hook (lambda () (company-mode -1)))
 
 (with-eval-after-load 'eshell
   (eshell-vterm-mode)
