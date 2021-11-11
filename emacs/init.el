@@ -37,7 +37,7 @@
                    (apply-partially wrapper wrapper) 90))
      ,@body))
 
-(defun y-or-n-p-always-y (orig-fun &rest args)
+(defun y-or-n-p-always-y-advice (orig-fun &rest args)
   "Run function with always `y' for `y-or-n-p'."
   (cl-letf (((symbol-function #'y-or-n-p) (lambda (_prompt) t)))
     (apply orig-fun args)))
@@ -141,7 +141,9 @@
               turn-on-auto-fill))
   (add-hook 'text-mode-hook fn))
 
-;;; Enable rainbow mode for theme files
+;;; Themes
+
+(setq custom-safe-themes t)
 
 (add-to-list 'auto-minor-mode-alist '("-theme\\.el\\'" . rainbow-mode))
 
@@ -155,7 +157,7 @@
 (setq ediff-window-setup-function #'ediff-setup-windows-plain
       ediff-split-window-function #'split-window-horizontally)
 
-(advice-add 'ediff-quit :around #'y-or-n-p-always-y)
+(advice-add 'ediff-quit :around #'y-or-n-p-always-y-advice)
 
 ;;; Tramp
 
@@ -251,12 +253,16 @@
 
 ;;; Eshell
 
-(setq eshell-modules-list '( eshell-alias eshell-basic eshell-cmpl eshell-dirs
-                             eshell-glob eshell-hist eshell-ls eshell-pred
-                             eshell-prompt eshell-term eshell-tramp eshell-unix)
+(setq eshell-modules-list '( eshell-basic eshell-cmpl eshell-dirs eshell-glob
+                             eshell-hist eshell-ls eshell-pred eshell-prompt
+                             eshell-term eshell-tramp eshell-unix)
       eshell-error-if-no-glob t
       eshell-glob-include-dot-dot nil
-      eshell-ask-to-save-last-dir nil)
+      eshell-ask-to-save-last-dir nil
+      eshell-buffer-maximum-lines 5000
+      eshell-hist-ignoredups t
+      eshell-prompt-function (lambda () "$ ")
+      eshell-prompt-regexp "^$ ")
 
 (add-hook 'eshell-mode-hook #'fish-completion-mode)
 
@@ -264,7 +270,23 @@
   (eshell-vterm-mode)
   (eshell-syntax-highlighting-global-mode))
 
-;;; Term
+(add-hook 'eshell-before-prompt-hook #'eshell-begin-on-new-line)
+
+(add-hook 'eshell-before-prompt-hook
+          (lambda ()
+            (rename-buffer (concat "eshell:"
+                                   (abbreviate-file-name (eshell/pwd))))))
+
+(setq eshell-input-filter (lambda (input)
+                            (and (eshell-input-filter-default input)
+                                 (not (string-prefix-p " " input)))))
+
+(defun eshell/e (&rest args)
+  "Open files in ARGS."
+  (dolist (file (mapcar #'expand-file-name (flatten-tree args)))
+    (find-file file)))
+
+;;; Vterm
 
 (setq vterm-max-scrollback 5000
       vterm-timer-delay 0.01
@@ -273,7 +295,7 @@
 (evil-define-key '(normal insert) vterm-mode-map
   ["C-c ESC"] #'vterm-send-escape)
 
-;;;; Start server and set environment
+;;; Start server
 
 (require 'server)
 
