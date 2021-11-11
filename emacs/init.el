@@ -137,7 +137,8 @@
 ;;; Tramp
 (with-eval-after-load 'tramp
   (setq tramp-default-method-alist `((,tramp-local-host-regexp nil "sudo"))
-        tramp-default-method "ssh"))
+        tramp-default-method "ssh")
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 ;;; Evil
 (setq evil-want-integration t
