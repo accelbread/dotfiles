@@ -7,10 +7,10 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '( which-key gcmh auto-minor-mode openwith pdf-tools rg
+      '( which-key gcmh auto-minor-mode openwith pdf-tools rg page-break-lines
          evil evil-collection flyspell-correct
          company selectrum orderless marginalia
-         fish-completion vterm eshell-vterm eshell-syntax-highlighting
+         fish-completion vterm eshell-vterm eshell-syntax-highlighting esh-help
          diminish mode-line-bell rainbow-delimiters hl-todo rainbow-mode
          markdown-mode rust-mode cargo zig-mode
          cmake-mode toml-mode yaml-mode git-modes
@@ -53,8 +53,7 @@
 (defalias 'yes-or-no-p #'y-or-n-p)
 
 (setq confirm-kill-processes nil
-      kill-buffer-query-functions
-      (delq #'process-kill-buffer-query-function kill-buffer-query-functions)
+      kill-buffer-query-functions nil
       auth-source-save-behavior nil)
 
 ;;; Make moving past view edge not jump
@@ -71,7 +70,7 @@
 
 ;;; Prevent input method from consuming keys
 
-(when (eq window-system 'pgtk) (pgtk-use-im-context nil))
+(setq pgtk-use-im-context nil)
 
 ;;; Disable overwriting of system clipboard with selection
 
@@ -87,9 +86,9 @@
 (global-auto-revert-mode 1)
 (diminish #'auto-revert-mode)
 
-;;; Hide abbrev mode
+;;; Auto close pairs
 
-(diminish #'abbrev-mode)
+(electric-pair-mode)
 
 ;;; Formatting
 
@@ -98,54 +97,46 @@
               indent-tabs-mode nil
               tab-always-indent nil)
 
-(setq sentence-end-double-space nil
-      whitespace-style '(face trailing tab-mark missing-newline-at-eof))
+(setq sentence-end-double-space nil)
 
-(with-eval-after-load 'whitespace
-  (diminish #'whitespace-mode))
+(add-hook 'text-mode #'auto-fill-mode)
 
 ;;; UI
 
 (blink-cursor-mode -1)
-(window-divider-mode 1)
+(window-divider-mode)
 (fringe-mode 9)
-(column-number-mode 1)
+(column-number-mode)
+(global-whitespace-mode)
 (global-prettify-symbols-mode)
+(global-page-break-lines-mode)
 (mode-line-bell-mode)
 (global-hl-todo-mode)
 
-(setq mode-line-compact 'long)
+(dolist (hook '(prog-mode-hook text-mode-hook))
+  (add-hook hook #'display-fill-column-indicator-mode))
+
+(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+
+(diminish #'abbrev-mode)
+(diminish #'global-whitespace-mode)
+
+(setq mode-line-compact 'long
+      page-break-lines-lighter nil
+      whitespace-style '(face trailing tab-mark missing-newline-at-eof)
+      whitespace-global-modes '(prog-mode text-mode))
 
 (after-frame
  (load-theme 'my-purple t)
  (set-face-attribute 'default nil :family "DejaVu Sans Mono" :height 100)
  (set-fontset-font t 'emoji "Twemoji" nil 'prepend))
 
-;;; Auto close pairs
+;;; Performance
 
-(electric-pair-mode)
+(setq-default bidi-paragraph-direction 'left-to-right)
+(setq bidi-inhibit-bpa t)
 
-;;; Prog mode
-
-(dolist (fn '(display-fill-column-indicator-mode
-              whitespace-mode
-              flyspell-prog-mode
-              rainbow-delimiters-mode))
-  (add-hook 'prog-mode-hook fn))
-
-;;; Text mode
-
-(dolist (fn '(display-fill-column-indicator-mode
-              whitespace-mode
-              flyspell-mode
-              turn-on-auto-fill))
-  (add-hook 'text-mode-hook fn))
-
-;;; Themes
-
-(setq custom-safe-themes t)
-
-(add-to-list 'auto-minor-mode-alist '("-theme\\.el\\'" . rainbow-mode))
+(global-so-long-mode)
 
 ;;; Eldoc
 
@@ -168,6 +159,11 @@
 
 ;;; Evil
 
+(defun my-evil-lookup-func ()
+  (defvar woman-use-topic-at-point)
+  (let ((woman-use-topic-at-point t))
+    (woman)))
+
 (setq evil-want-integration t
       evil-want-keybinding nil
       evil-want-minibuffer t
@@ -180,6 +176,7 @@
       evil-intercept-esc t
       evil-want-C-u-scroll t
       evil-ex-complete-emacs-commands t
+      evil-lookup-func #'my-evil-lookup-func
       evil-collection-setup-minibuffer t
       evil-collection-want-unimpaired-p nil
       evil-collection-magit-want-horizontal-movement t
@@ -221,6 +218,9 @@
                                          font-lock-doc-face
                                          font-lock-string-face))
 
+(add-hook 'text-mode-hook #'flyspell-mode)
+(add-hook 'prog-mode-hook #'flyspell-prog-mode)
+
 ;;; Completion
 
 (setq completion-styles '(orderless))
@@ -253,6 +253,19 @@
 
 ;;; Eshell
 
+(defun my-eshell-prompt ()
+  (concat (unless (eshell-exit-success-p)
+            (propertize
+             (number-to-string eshell-last-command-status) 'face 'error))
+          (if (file-remote-p default-directory) "# " "$ ")))
+
+(defun my-eshell-buffer-name ()
+  (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
+
+(defun my-eshell-history-filter (input)
+  (and (eshell-input-filter-default input)
+       (not (string-prefix-p " " input))))
+
 (setq eshell-modules-list '( eshell-basic eshell-cmpl eshell-dirs eshell-glob
                              eshell-hist eshell-ls eshell-pred eshell-prompt
                              eshell-term eshell-tramp eshell-unix)
@@ -261,30 +274,53 @@
       eshell-ask-to-save-last-dir nil
       eshell-buffer-maximum-lines 5000
       eshell-hist-ignoredups t
-      eshell-prompt-function (lambda () "$ ")
-      eshell-prompt-regexp "^$ ")
+      eshell-prompt-function #'my-eshell-prompt
+      eshell-prompt-regexp "^[0-9]*[$#] "
+      eshell-input-filter #'my-eshell-history-filter
+      eshell-visual-subcommands '(("git" "log" "diff" "show"))
+      eshell-destroy-buffer-when-process-dies t)
 
 (add-hook 'eshell-mode-hook #'fish-completion-mode)
-
-(with-eval-after-load 'eshell
-  (eshell-vterm-mode)
-  (eshell-syntax-highlighting-global-mode))
+(add-hook 'eshell-mode-hook #'abbrev-mode)
 
 (add-hook 'eshell-before-prompt-hook #'eshell-begin-on-new-line)
+(add-hook 'eshell-before-prompt-hook #'my-eshell-buffer-name)
 
-(add-hook 'eshell-before-prompt-hook
-          (lambda ()
-            (rename-buffer (concat "eshell:"
-                                   (abbreviate-file-name (eshell/pwd))))))
-
-(setq eshell-input-filter (lambda (input)
-                            (and (eshell-input-filter-default input)
-                                 (not (string-prefix-p " " input)))))
+(with-eval-after-load 'eshell
+  (dolist (v '(eshell-last-commmand-name
+               eshell-last-command-status
+               eshell-last-command-result))
+    (make-variable-buffer-local v))
+  (eshell-syntax-highlighting-global-mode)
+  (eshell-vterm-mode)
+  (setup-esh-help-eldoc))
 
 (defun eshell/e (&rest args)
   "Open files in ARGS."
-  (dolist (file (mapcar #'expand-file-name (flatten-tree args)))
+  (dolist (file (reverse
+                 (mapcar #'expand-file-name
+                         (flatten-tree
+                          (mapcar (lambda (s)
+                                    (if (stringp s) (split-string s "\n") s))
+                                  args)))))
     (find-file file)))
+
+(put #'eshell/e 'eshell-no-numeric-conversions t)
+(put #'eshell/e 'eshell-filename-arguments t)
+
+(defun my-eshell-man (&rest args)
+  "Run `man', opening file with `woman'"
+  (setq args (eshell-stringify-list (flatten-tree args)))
+  (pcase-let ((`(,status . ,output)
+               (with-temp-buffer
+                 (cons (apply #'process-file "man" nil t nil "--path" args)
+                       (string-trim (buffer-string))))))
+    (if (= 0 status)
+        (woman-find-file (concat (file-remote-p default-directory) output))
+      (error output)))
+  nil)
+
+(advice-add #'eshell/man :override #'my-eshell-man)
 
 ;;; Vterm
 
@@ -295,7 +331,7 @@
 (evil-define-key '(normal insert) vterm-mode-map
   ["C-c ESC"] #'vterm-send-escape)
 
-;;; Start server
+;;; Server
 
 (require 'server)
 
@@ -311,10 +347,16 @@
 
 (setq magit-view-git-manual-method 'man
       transient-history-file null-device
-      magit-save-repository-buffers 'dontask)
+      magit-save-repository-buffers 'dontask
+      magit-delete-by-moving-to-trash nil)
 
 (with-eval-after-load 'magit
   (require 'forge))
+
+;;; Man
+
+(setq woman-fill-column 80
+      woman-default-indent 4)
 
 ;;; LSP
 
@@ -409,6 +451,12 @@
   (setf (alist-get 'other c-default-style) "stroustrup")
   (add-hook 'c-mode-hook
             (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0]))))
+
+;;; Themes
+
+(setq custom-safe-themes t)
+
+(add-to-list 'auto-minor-mode-alist '("-theme\\.el\\'" . rainbow-mode))
 
 ;;; PDF
 
