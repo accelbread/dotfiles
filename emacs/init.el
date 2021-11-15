@@ -292,6 +292,11 @@
   (eshell-vterm-mode)
   (setup-esh-help-eldoc))
 
+(with-eval-after-load 'abbrev
+  (define-abbrev-table 'eshell-mode-abbrev-table
+    '(("gitsub" "git submodule update --init --recursive --checkout")
+      ("gitcl" "git clone --filter=blob:none"))))
+
 (defun eshell/e (&rest args)
   "Open files in ARGS."
   (dolist (file (reverse
