@@ -310,20 +310,6 @@
 (put #'eshell/e 'eshell-no-numeric-conversions t)
 (put #'eshell/e 'eshell-filename-arguments t)
 
-(defun my-eshell-man (&rest args)
-  "Run `man', opening file with `woman'"
-  (setq args (eshell-stringify-list (flatten-tree args)))
-  (pcase-let ((`(,status . ,output)
-               (with-temp-buffer
-                 (cons (apply #'process-file "man" nil t nil "--path" args)
-                       (string-trim (buffer-string))))))
-    (if (= 0 status)
-        (woman-find-file (concat (file-remote-p default-directory) output))
-      (error output)))
-  nil)
-
-(advice-add #'eshell/man :override #'my-eshell-man)
-
 ;;; Vterm
 
 (setq vterm-max-scrollback 5000
@@ -347,7 +333,7 @@
 
 ;;; Magit
 
-(setq magit-view-git-manual-method 'man
+(setq magit-view-git-manual-method 'woman
       transient-history-file null-device
       magit-save-repository-buffers 'dontask
       magit-delete-by-moving-to-trash nil)
@@ -359,6 +345,20 @@
 
 (setq woman-fill-column 80
       woman-default-indent 4)
+
+(defun man-woman (man-args)
+  "Run `man', opening file using `woman'"
+  (pcase-let ((`(,status . ,output)
+               (with-temp-buffer
+                 (cons (apply #'process-file "man" nil t nil
+                              "--path" (split-string man-args))
+                       (string-trim (buffer-string))))))
+    (if (= 0 status)
+        (woman-find-file (concat (file-remote-p default-directory) output))
+      (error output)))
+  nil)
+
+(advice-add #'Man-getpage-in-background :override #'man-woman)
 
 ;;; LSP
 
