@@ -128,7 +128,7 @@
 
 (after-frame
  (load-theme 'my-purple t)
- (set-face-attribute 'default nil :family "DejaVu Sans Mono" :height 100)
+ (set-face-attribute 'default nil :family "DejaVu Sans Mono" :height 150)
  (set-fontset-font t 'emoji "Twemoji" nil 'prepend))
 
 ;;; Performance
