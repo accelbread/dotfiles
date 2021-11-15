@@ -284,13 +284,21 @@
 (add-hook 'eshell-before-prompt-hook #'my-eshell-buffer-name)
 
 (with-eval-after-load 'eshell
-  (dolist (v '(eshell-last-commmand-name
-               eshell-last-command-status
-               eshell-last-command-result))
-    (make-variable-buffer-local v))
   (eshell-syntax-highlighting-global-mode)
   (eshell-vterm-mode)
   (setup-esh-help-eldoc))
+
+(with-eval-after-load 'esh-cmd
+  (dolist (v '(eshell-last-commmand-name
+               eshell-last-command-status
+               eshell-last-command-result))
+    (make-variable-buffer-local v)))
+
+(with-eval-after-load 'esh-var
+  ;; Have `$/' evaluate to root of current remote.
+  (add-to-list
+   'eshell-variable-aliases-list
+   `("/" ,(lambda (_indices) (concat (file-remote-p default-directory) "/")))))
 
 (with-eval-after-load 'abbrev
   (define-abbrev-table 'eshell-mode-abbrev-table
