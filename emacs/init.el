@@ -262,10 +262,6 @@
 (defun my-eshell-buffer-name ()
   (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
 
-(defun my-eshell-history-filter (input)
-  (and (eshell-input-filter-default input)
-       (not (string-prefix-p " " input))))
-
 (setq eshell-modules-list '( eshell-basic eshell-cmpl eshell-dirs eshell-glob
                              eshell-hist eshell-ls eshell-pred eshell-prompt
                              eshell-term eshell-tramp eshell-unix)
@@ -274,9 +270,10 @@
       eshell-ask-to-save-last-dir nil
       eshell-buffer-maximum-lines 5000
       eshell-hist-ignoredups t
+      eshell-hist-move-to-end nil
       eshell-prompt-function #'my-eshell-prompt
       eshell-prompt-regexp "^[0-9]*[$#] "
-      eshell-input-filter #'my-eshell-history-filter
+      eshell-input-filter #'eshell-input-filter-initial-space
       eshell-visual-subcommands '(("git" "log" "diff" "show"))
       eshell-destroy-buffer-when-process-dies t)
 
