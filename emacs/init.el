@@ -63,6 +63,15 @@
       server-client-instructions nil)
 
 
+;;; Notes
+
+(setq initial-buffer-choice 'remember-notes
+      remember-notes-initial-major-mode 'markdown-mode
+      remember-data-file "~/Documents/notes/index.md")
+
+(add-hook 'remember-notes-mode-hook (lambda () (setq default-directory "~")))
+
+
 ;;; Reduce confirmations
 
 (defalias 'yes-or-no-p #'y-or-n-p)
