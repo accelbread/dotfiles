@@ -251,6 +251,10 @@
       flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
                                          flymake-mode-line-warning-counter "]"))
 
+;;; Comint
+
+(setq comint-terminfo-terminal "dumb-emacs-ansi")
+
 ;;; Eshell
 
 (defun my-eshell-prompt ()
@@ -261,6 +265,10 @@
 
 (defun my-eshell-buffer-name ()
   (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
+
+(defun my-eshell-init ()
+  (setenv "TERM" "dumb-emacs-ansi")
+  (setenv "GIT_PAGER" ""))
 
 (setq eshell-modules-list '( eshell-basic eshell-cmpl eshell-dirs eshell-glob
                              eshell-hist eshell-ls eshell-pred eshell-prompt
@@ -274,11 +282,11 @@
       eshell-prompt-function #'my-eshell-prompt
       eshell-prompt-regexp "^[0-9]*[$#] "
       eshell-input-filter #'eshell-input-filter-initial-space
-      eshell-visual-subcommands '(("git" "log" "diff" "show"))
       eshell-destroy-buffer-when-process-dies t)
 
 (add-hook 'eshell-mode-hook #'fish-completion-mode)
 (add-hook 'eshell-mode-hook #'abbrev-mode)
+(add-hook 'eshell-mode-hook #'my-eshell-init)
 
 (add-hook 'eshell-before-prompt-hook #'eshell-begin-on-new-line)
 (add-hook 'eshell-before-prompt-hook #'my-eshell-buffer-name)
