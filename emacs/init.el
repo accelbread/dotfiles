@@ -9,7 +9,7 @@
 (setq package-selected-packages
       '( which-key gcmh auto-minor-mode openwith pdf-tools rg page-break-lines
          evil evil-collection flyspell-correct
-         company selectrum orderless marginalia
+         company company-posframe selectrum orderless marginalia
          fish-completion vterm eshell-vterm eshell-syntax-highlighting esh-help
          diminish mode-line-bell rainbow-delimiters hl-todo rainbow-mode
          markdown-mode rust-mode cargo zig-mode
@@ -254,9 +254,15 @@
       company-dabbrev-ignore-case nil
       company-backends '(company-files
                          company-capf
-                         (:separate company-dabbrev company-ispell)))
+                         (:separate company-dabbrev company-ispell))
+      company-posframe-lighter nil
+      company-posframe-show-indicator nil
+      company-posframe-show-metadata nil
+      company-posframe-quickhelp-delay nil)
 
 (global-company-mode)
+(company-posframe-mode)
+
 (diminish #'company-mode)
 
 (define-key company-active-map [return] nil)
