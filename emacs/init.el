@@ -135,6 +135,7 @@
 
 (setq mode-line-compact 'long
       page-break-lines-lighter nil
+      page-break-lines-max-width 80
       whitespace-style '(face trailing tab-mark missing-newline-at-eof)
       whitespace-global-modes '(prog-mode text-mode))
 
