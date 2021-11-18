@@ -24,6 +24,7 @@
 
 (package-install-selected-packages t)
 
+
 ;;; Config utils
 
 (defmacro after-frame (&rest body)
@@ -42,12 +43,14 @@
   (cl-letf (((symbol-function #'y-or-n-p) (lambda (_prompt) t)))
     (apply orig-fun args)))
 
+
 ;;; Hide welcome messages
 
 (setq inhibit-startup-screen t
       initial-scratch-message nil
       server-client-instructions nil)
 
+
 ;;; Reduce confirmations
 
 (defalias 'yes-or-no-p #'y-or-n-p)
@@ -56,11 +59,13 @@
       kill-buffer-query-functions nil
       auth-source-save-behavior nil)
 
+
 ;;; Make moving past view edge not jump
 
 (setq scroll-conservatively 101
       scroll-margin 0)
 
+
 ;;; Prevent misc file creation
 
 (setq auto-save-file-name-transforms '((".*" "~/.cache/emacs/autosave/" t))
@@ -68,28 +73,34 @@
       create-lockfiles nil
       custom-file null-device)
 
+
 ;;; Prevent input method from consuming keys
 
 (setq pgtk-use-im-context nil)
 
+
 ;;; Disable overwriting of system clipboard with selection
 
 (setq select-enable-clipboard nil)
 
+
 ;;; Leave frame size alone
 
 (setq frame-resize-pixelwise t
       frame-inhibit-implied-resize t)
 
+
 ;;; Update files modified on disk
 
 (global-auto-revert-mode 1)
 (diminish #'auto-revert-mode)
 
+
 ;;; Auto close pairs
 
 (electric-pair-mode)
 
+
 ;;; Formatting
 
 (setq-default fill-column 80
@@ -101,6 +112,7 @@
 
 (add-hook 'text-mode #'auto-fill-mode)
 
+
 ;;; UI
 
 (blink-cursor-mode -1)
@@ -131,6 +143,7 @@
  (set-face-attribute 'default nil :family "DejaVu Sans Mono" :height 150)
  (set-fontset-font t 'emoji "Twemoji" nil 'prepend))
 
+
 ;;; Performance
 
 (setq-default bidi-paragraph-direction 'left-to-right)
@@ -138,11 +151,13 @@
 
 (global-so-long-mode)
 
+
 ;;; Eldoc
 
 (setq eldoc-echo-area-prefer-doc-buffer t
       eldoc-minor-mode-string " Doc")
 
+
 ;;; Ediff
 
 (setq ediff-window-setup-function #'ediff-setup-windows-plain
@@ -150,6 +165,7 @@
 
 (advice-add 'ediff-quit :around #'y-or-n-p-always-y-advice)
 
+
 ;;; Tramp
 
 (with-eval-after-load 'tramp
@@ -157,6 +173,7 @@
         tramp-default-method "ssh")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
+
 ;;; Evil
 
 (defun my-evil-lookup-func ()
@@ -194,6 +211,7 @@
 (evil-ex-define-cmd "wbdq[uit]" #'save-kill-buffer-and-window)
 (evil-global-set-key 'normal ["z ="] #'flyspell-correct-at-point)
 
+
 ;;; Spell checking
 
 (setq ispell-dictionary "en_US"
@@ -221,6 +239,7 @@
 (add-hook 'text-mode-hook #'flyspell-mode)
 (add-hook 'prog-mode-hook #'flyspell-prog-mode)
 
+
 ;;; Completion
 
 (setq completion-styles '(orderless))
@@ -245,16 +264,19 @@
 (define-key company-active-map [tab] #'company-complete)
 (define-key company-active-map ["TAB"] #'company-complete)
 
+
 ;;; Flymake
 
 (setq flymake-mode-line-format '(" " flymake-mode-line-counters)
       flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
                                          flymake-mode-line-warning-counter "]"))
 
+
 ;;; Comint
 
 (setq comint-terminfo-terminal "dumb-emacs-ansi")
 
+
 ;;; Eshell
 
 (defun my-eshell-prompt ()
@@ -326,6 +348,7 @@
 (put #'eshell/e 'eshell-no-numeric-conversions t)
 (put #'eshell/e 'eshell-filename-arguments t)
 
+
 ;;; Vterm
 
 (setq vterm-max-scrollback 5000
@@ -335,6 +358,7 @@
 (evil-define-key '(normal insert) vterm-mode-map
   ["C-c ESC"] #'vterm-send-escape)
 
+
 ;;; Server
 
 (require 'server)
@@ -347,6 +371,7 @@
 (setenv "EDITOR" "emacsclient")
 (setenv "VISUAL" "emacsclient")
 
+
 ;;; Magit
 
 (setq magit-view-git-manual-method 'woman
@@ -357,6 +382,7 @@
 (with-eval-after-load 'magit
   (require 'forge))
 
+
 ;;; Man
 
 (setq woman-fill-column 80
@@ -376,6 +402,7 @@
 
 (advice-add #'Man-getpage-in-background :override #'man-woman)
 
+
 ;;; LSP
 
 (setq eglot-stay-out-of '(company))
@@ -394,6 +421,7 @@
 (yas-global-mode)
 (diminish #'yas-minor-mode)
 
+
 ;;; Treesitter
 
 (global-tree-sitter-mode)
@@ -428,6 +456,7 @@
                 `(,desc . ,(eval
                             `(evil-textobj-tree-sitter-get-textobj ,query))))))
 
+
 ;;; Which-key
 
 (setq which-key-idle-delay 0.5
@@ -439,11 +468,13 @@
 (which-key-mode)
 (diminish #'which-key-mode)
 
+
 ;;; Elisp
 
 (setq elisp-flymake-byte-compile-load-path
       (append elisp-flymake-byte-compile-load-path load-path))
 
+
 ;;; Markdown
 
 (setq markdown-asymmetric-header t
@@ -453,6 +484,7 @@
       markdown-disable-tooltip-prompt t
       markdown-command '("pandoc" "--from=markdown" "--to=html5"))
 
+
 ;;; Rust
 
 (setq rust-format-on-save t)
@@ -463,6 +495,7 @@
 (with-eval-after-load 'cargo
   (diminish #'cargo-minor-mode))
 
+
 ;;; C
 
 (with-eval-after-load 'cc-mode
@@ -470,12 +503,14 @@
   (add-hook 'c-mode-hook
             (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0]))))
 
+
 ;;; Themes
 
 (setq custom-safe-themes t)
 
 (add-to-list 'auto-minor-mode-alist '("-theme\\.el\\'" . rainbow-mode))
 
+
 ;;; PDF
 
 (pdf-loader-install)
@@ -483,6 +518,7 @@
 (with-eval-after-load 'pdf-view
   (diminish #'pdf-view-midnight-minor-mode))
 
+
 ;;; Open outside Emacs
 
 (setq openwith-associations
@@ -498,12 +534,14 @@
                        filename)
                 (funcall orig-fun size op-type filename offer-raw))))
 
+
 ;;; Local configuration
 
 (let ((local-config (concat user-emacs-directory "local-config.el")))
   (if (file-exists-p local-config)
       (load-file local-config)))
 
+
 ;;; Commands
 
 (defun save-kill-current-buffer ()
@@ -523,6 +561,7 @@
   (interactive)
   (serial-term (serial-read-name) 115200))
 
+
 ;;; Garbage collect when idle
 
 (setq gcmh-idle-delay 'auto
