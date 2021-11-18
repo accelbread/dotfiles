@@ -1,5 +1,11 @@
 ;;; init.el -*- lexical-binding: t; -*-
+
+;;; Networking
 
+(setq network-security-level 'high
+      gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2:-VERS-TLS1.1:-VERS-TLS1.0")
+
+
 ;;; Install packages
 
 (require 'package)
@@ -22,7 +28,9 @@
       package-quickstart t
       vterm-always-compile-module t)
 
-(package-install-selected-packages t)
+(unless (seq-every-p #'package-installed-p package-selected-packages)
+  (package-refresh-contents)
+  (package-install-selected-packages t))
 
 
 ;;; Config utils
@@ -43,6 +51,10 @@
   (cl-letf (((symbol-function #'y-or-n-p) (lambda (_prompt) t)))
     (apply orig-fun args)))
 
+(defmacro push-default (newelt place)
+  `(setq-default ,place
+        (cons ,newelt ,place)))
+
 
 ;;; Hide welcome messages
 
@@ -60,7 +72,7 @@
       auth-source-save-behavior nil)
 
 
-;;; Make moving past view edge not jump
+;;; Scroll by single line at window edge
 
 (setq scroll-conservatively 101
       scroll-margin 0)
@@ -141,7 +153,9 @@
 
 (after-frame
  (load-theme 'my-purple t)
- (set-face-attribute 'default nil :family "DejaVu Sans Mono" :height 150)
+ (set-face-attribute 'default nil :height 150 :family "DejaVu Sans Mono")
+ (set-face-attribute 'fixed-pitch nil :family "DejaVu Sans Mono")
+ (set-face-attribute 'variable-pitch nil :family "DejaVu Sans")
  (set-fontset-font t 'emoji "Twemoji" nil 'prepend))
 
 
@@ -149,8 +163,6 @@
 
 (setq-default bidi-paragraph-direction 'left-to-right)
 (setq bidi-inhibit-bpa t)
-
-(global-so-long-mode)
 
 
 ;;; Eldoc
@@ -199,6 +211,8 @@
       evil-collection-want-unimpaired-p nil
       evil-collection-magit-want-horizontal-movement t
       evil-collection-magit-use-z-for-folds t)
+
+(global-set-key ["<escape>"] 'keyboard-escape-quit)
 
 (evil-mode)
 (evil-collection-init)
@@ -279,6 +293,11 @@
                                          flymake-mode-line-warning-counter "]"))
 
 
+;;; Proced
+
+(setq proced-auto-update-interval 0.05)
+
+
 ;;; Comint
 
 (setq comint-terminfo-terminal "dumb-emacs-ansi")
@@ -296,6 +315,7 @@
   (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
 
 (defun my-eshell-init ()
+  (face-remap-set-base 'nobreak-space nil)
   (setenv "TERM" "dumb-emacs-ansi")
   (setenv "GIT_PAGER" ""))
 
@@ -306,6 +326,7 @@
       eshell-glob-include-dot-dot nil
       eshell-ask-to-save-last-dir nil
       eshell-buffer-maximum-lines 5000
+      eshell-history-size 512
       eshell-hist-ignoredups t
       eshell-hist-move-to-end nil
       eshell-prompt-function #'my-eshell-prompt
@@ -410,23 +431,27 @@
 (advice-add #'Man-getpage-in-background :override #'man-woman)
 
 
+;;; Which-key
+
+(setq which-key-idle-delay 0.5
+      which-key-compute-remaps t
+      which-key-sort-order 'which-key-description-order
+      which-key-side-window-max-height 0.5
+      which-key-unicode-correction 0)
+
+(which-key-mode)
+(diminish #'which-key-mode)
+
+
 ;;; LSP
 
 (setq eglot-stay-out-of '(company))
 
-(setq-default eglot-workspace-configuration
-              '((rust-analyzer (checkOnSave (command . "clippy")))))
-
-(with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer"))))
-
-(add-hook 'c-mode-hook #'eglot-ensure)
-(add-hook 'rust-mode-hook #'eglot-ensure)
-(add-hook 'zig-mode-hook #'eglot-ensure)
-(add-hook 'python-mode-hook #'eglot-ensure)
-
 (yas-global-mode)
 (diminish #'yas-minor-mode)
+
+(add-hook 'zig-mode-hook #'eglot-ensure)
+(add-hook 'python-mode-hook #'eglot-ensure)
 
 
 ;;; Treesitter
@@ -464,18 +489,6 @@
                             `(evil-textobj-tree-sitter-get-textobj ,query))))))
 
 
-;;; Which-key
-
-(setq which-key-idle-delay 0.5
-      which-key-compute-remaps t
-      which-key-sort-order 'which-key-description-order
-      which-key-side-window-max-height 0.5
-      which-key-unicode-correction 0)
-
-(which-key-mode)
-(diminish #'which-key-mode)
-
-
 ;;; Elisp
 
 (setq elisp-flymake-byte-compile-load-path
@@ -496,6 +509,12 @@
 
 (setq rust-format-on-save t)
 
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer")))
+  (push-default '(rust-analyzer (checkOnSave (command . "clippy")))
+                eglot-workspace-configuration))
+
+(add-hook 'rust-mode-hook #'eglot-ensure)
 (add-hook 'rust-mode-hook #'cargo-minor-mode)
 (add-hook 'toml-mode-hook #'cargo-minor-mode)
 
@@ -504,6 +523,8 @@
 
 
 ;;; C
+
+(add-hook 'c-mode-hook #'eglot-ensure)
 
 (with-eval-after-load 'cc-mode
   (setf (alist-get 'other c-default-style) "stroustrup")
@@ -531,7 +552,7 @@
 (setq openwith-associations
       '(("\\.mkv\\'" "mpv" (file))))
 
-(openwith-mode 1)
+(openwith-mode)
 
 (advice-add #'abort-if-file-too-large :around
             (lambda (orig-fun size op-type filename &optional offer-raw)
@@ -544,9 +565,9 @@
 
 ;;; Local configuration
 
-(let ((local-config (concat user-emacs-directory "local-config.el")))
-  (if (file-exists-p local-config)
-      (load-file local-config)))
+(let ((local-init (concat user-emacs-directory "local-init.el")))
+  (if (file-exists-p local-init)
+      (load-file local-init)))
 
 
 ;;; Commands
