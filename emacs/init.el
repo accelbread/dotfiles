@@ -307,9 +307,19 @@
 (setq proced-auto-update-interval 0.05)
 
 
-;;; Comint
+;;; Shell
 
 (setq comint-terminfo-terminal "dumb-emacs-ansi")
+
+(setenv "LS_COLORS" (concat "di=38;2;131;140;244:"    ; Directory
+                            "ex=38;2;231;128;255:"    ; Executable
+                            "ln=38;2;102;204;204:"    ; Symlink
+                            "or=38;2;255;128;128:"    ; Broken symlink
+                            "mi=38;2;255;128;128:"    ; Missing file
+                            "pi=38;2;255;128;222:"    ; Named pipe
+                            "bd=38;2;255;128;222:"    ; Block device
+                            "cd=38;2;255;128;222:"    ; Char device
+                            "so=38;2;255;128;222:"))  ; Socket
 
 
 ;;; Eshell
@@ -341,7 +351,11 @@
       eshell-prompt-function #'my-eshell-prompt
       eshell-prompt-regexp "^[0-9]*[$#] "
       eshell-input-filter #'eshell-input-filter-initial-space
-      eshell-destroy-buffer-when-process-dies t)
+      eshell-destroy-buffer-when-process-dies t
+      eshell-ls-archive-regexp ""
+      eshell-ls-backup-regexp ""
+      eshell-ls-clutter-regexp ""
+      eshell-ls-product-regexp "")
 
 (add-hook 'eshell-mode-hook #'fish-completion-mode)
 (add-hook 'eshell-mode-hook #'abbrev-mode)
