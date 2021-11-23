@@ -198,10 +198,9 @@
 
 ;;; Evil
 
-(defun my-evil-lookup-func ()
-  (defvar woman-use-topic-at-point)
-  (let ((woman-use-topic-at-point t))
-    (woman)))
+(defun my-evil-lookup-man ()
+  "Open man page for term at point"
+  (call-interactively 'man-follow))
 
 (setq evil-want-integration t
       evil-want-keybinding nil
@@ -215,7 +214,7 @@
       evil-intercept-esc t
       evil-want-C-u-scroll t
       evil-ex-complete-emacs-commands t
-      evil-lookup-func #'my-evil-lookup-func
+      evil-lookup-func #'my-evil-lookup-man
       evil-collection-setup-minibuffer t
       evil-collection-want-unimpaired-p nil
       evil-collection-magit-want-horizontal-movement t
@@ -425,7 +424,7 @@
 
 ;;; Magit
 
-(setq magit-view-git-manual-method 'woman
+(setq magit-view-git-manual-method 'man
       transient-history-file null-device
       magit-save-repository-buffers 'dontask
       magit-delete-by-moving-to-trash nil)
@@ -436,22 +435,8 @@
 
 ;;; Man
 
-(setq woman-fill-column 80
-      woman-default-indent 4)
+(setq Man-width-max nil)
 
-(defun man-woman (man-args)
-  "Run `man', opening file using `woman'"
-  (pcase-let ((`(,status . ,output)
-               (with-temp-buffer
-                 (cons (apply #'process-file "man" nil t nil
-                              "--path" (split-string man-args))
-                       (string-trim (buffer-string))))))
-    (if (= 0 status)
-        (woman-find-file (concat (file-remote-p default-directory) output))
-      (error output)))
-  nil)
-
-(advice-add #'Man-getpage-in-background :override #'man-woman)
 
 
 ;;; Which-key
