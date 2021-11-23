@@ -47,13 +47,14 @@
      ,@body))
 
 (defun y-or-n-p-always-y-advice (orig-fun &rest args)
-  "Run function with always `y' for `y-or-n-p'."
+  "Call ORIG-FUN with ARGS, automatically using `y' for `y-or-n-p' questions."
   (cl-letf (((symbol-function #'y-or-n-p) (lambda (_prompt) t)))
     (apply orig-fun args)))
 
-(defmacro push-default (newelt place)
-  `(setq-default ,place
-        (cons ,newelt ,place)))
+(defmacro push-default (newelt var)
+  "Add NEWELT to the list stored in the default value of VAR."
+  `(setq-default ,var
+        (cons ,newelt (default-value ,var))))
 
 
 ;;; Hide welcome messages
@@ -125,7 +126,6 @@
 ;;; Formatting
 
 (setq-default fill-column 80
-              tab-width 4
               indent-tabs-mode nil
               tab-always-indent nil)
 
@@ -158,7 +158,7 @@
       page-break-lines-lighter nil
       page-break-lines-max-width 80
       whitespace-style '(face trailing tab-mark missing-newline-at-eof)
-      whitespace-global-modes '(prog-mode text-mode))
+      whitespace-global-modes '(prog-mode text-mode conf-mode))
 
 (after-frame
  (load-theme 'my-purple t)
@@ -173,6 +173,8 @@
 (setq-default bidi-paragraph-direction 'left-to-right)
 (setq bidi-inhibit-bpa t)
 
+(global-so-long-mode)
+
 
 ;;; Eldoc
 
@@ -185,7 +187,7 @@
 (setq ediff-window-setup-function #'ediff-setup-windows-plain
       ediff-split-window-function #'split-window-horizontally)
 
-(advice-add 'ediff-quit :around #'y-or-n-p-always-y-advice)
+(advice-add #'ediff-quit :around #'y-or-n-p-always-y-advice)
 
 
 ;;; Tramp
@@ -199,8 +201,13 @@
 ;;; Evil
 
 (defun my-evil-lookup-man ()
-  "Open man page for term at point"
-  (call-interactively 'man-follow))
+  "Open man page for term at point."
+  (call-interactively #'man-follow))
+
+(defun evil-lookup-use-eldoc ()
+  "Set `evil-lookup-func' to use eldoc in current buffer."
+  (interactive)
+  (setq-local evil-lookup-func #'eldoc-print-current-symbol-info))
 
 (setq evil-want-integration t
       evil-want-keybinding nil
@@ -220,19 +227,20 @@
       evil-collection-magit-want-horizontal-movement t
       evil-collection-magit-use-z-for-folds t)
 
-(global-set-key ["<escape>"] 'keyboard-escape-quit)
-
 (evil-mode)
 (evil-collection-init)
 
 (evil-set-type 'evil-backward-word-begin 'inclusive)
 (evil-set-type 'evil-backward-WORD-begin 'inclusive)
 
+(global-set-key ["<escape>"] #'keyboard-escape-quit)
+
+(evil-global-set-key 'normal ["z ="] #'flyspell-correct-at-point)
+
 (evil-ex-define-cmd "bd[elete]" #'kill-current-buffer)
 (evil-ex-define-cmd "wbd[elete]" #'save-kill-current-buffer)
 (evil-ex-define-cmd "bdq[uit]" #'kill-buffer-and-window)
 (evil-ex-define-cmd "wbdq[uit]" #'save-kill-buffer-and-window)
-(evil-global-set-key 'normal ["z ="] #'flyspell-correct-at-point)
 
 
 ;;; Spell checking
@@ -303,7 +311,7 @@
 
 ;;; Proced
 
-(setq proced-auto-update-interval 0.05)
+(setq proced-auto-update-interval 1)
 
 
 ;;; Shell
@@ -324,15 +332,18 @@
 ;;; Eshell
 
 (defun my-eshell-prompt ()
+  "Eshell prompt with last error code and `#' to indicate remote directory."
   (concat (unless (eshell-exit-success-p)
             (propertize
              (number-to-string eshell-last-command-status) 'face 'error))
           (if (file-remote-p default-directory) "# " "$ ")))
 
 (defun my-eshell-buffer-name ()
+  "Rename eshell buffer to unique name based off of current directory."
   (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
 
 (defun my-eshell-init ()
+  "Function to run in new eshell buffers."
   (face-remap-set-base 'nobreak-space nil)
   (setenv "TERM" "dumb-emacs-ansi")
   (setenv "GIT_PAGER" ""))
@@ -382,8 +393,10 @@
 
 (with-eval-after-load 'abbrev
   (define-abbrev-table 'eshell-mode-abbrev-table
-    '(("gitsub" "git submodule update --init --recursive --checkout")
-      ("gitcl" "git clone --filter=blob:none"))))
+    '(("gitcl"
+       "git clone --filter=blob:none")
+      ("gitsub"
+       "git submodule update --init --recursive --checkout --depth 1"))))
 
 (defun eshell/e (&rest args)
   "Open files in ARGS."
@@ -433,10 +446,16 @@
   (require 'forge))
 
 
+;;; Info
+
+(add-hook 'Info-mode-hook #'variable-pitch-mode)
+
+
 ;;; Man
 
 (setq Man-width-max nil)
 
+(add-hook 'Man-mode-hook #'variable-pitch-mode)
 
 
 ;;; Which-key
@@ -457,6 +476,8 @@
 
 (yas-global-mode)
 (diminish #'yas-minor-mode)
+
+(add-hook 'eglot-managed-mode-hook #'evil-lookup-use-eldoc)
 
 (add-hook 'zig-mode-hook #'eglot-ensure)
 (add-hook 'python-mode-hook #'eglot-ensure)
