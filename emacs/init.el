@@ -51,6 +51,11 @@
   (cl-letf (((symbol-function #'y-or-n-p) (lambda (_prompt) t)))
     (apply orig-fun args)))
 
+(defun inhibit-redisplay-advice (orig-fun &rest args)
+  "Call ORIG-FUN with ARGS with display inhibited."
+    (let ((inhibit-redisplay t))
+      (apply orig-fun args)))
+
 (defmacro push-default (newelt var)
   "Add NEWELT to the list stored in the default value of VAR."
   `(setq-default ,var
@@ -251,21 +256,22 @@
       flyspell-issue-message-flag nil
       flyspell-mode-line-string nil)
 
-(defun flyspell-buffer-if-enabled (&rest _)
-  "Run `flyspell-buffer' only if `flyspell-mode' is enabled."
-  (when flyspell-mode (flyspell-buffer)))
-
-(add-hook 'flyspell-mode-hook #'flyspell-buffer-if-enabled)
-(advice-add 'ispell-pdict-save :after #'flyspell-buffer-if-enabled)
-(advice-add 'evil-paste-before :after #'flyspell-buffer-if-enabled)
-(advice-add 'evil-paste-after :after #'flyspell-buffer-if-enabled)
-
 (setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
                                          tree-sitter-hl-face:doc
                                          tree-sitter-hl-face:string
                                          font-lock-comment-face
                                          font-lock-doc-face
                                          font-lock-string-face))
+
+(defun flyspell-configure-jit-lock ()
+  "Set `flyspell-region' in jit-lock functions matching `flyspell-mode'."
+  (if flyspell-mode
+      (jit-lock-register #'flyspell-region)
+    (jit-lock-unregister #'flyspell-region)))
+
+(add-hook 'flyspell-mode-hook #'flyspell-configure-jit-lock)
+
+(advice-add #'flyspell-region :around #'inhibit-redisplay-advice)
 
 (add-hook 'text-mode-hook #'flyspell-mode)
 (add-hook 'prog-mode-hook #'flyspell-prog-mode)
