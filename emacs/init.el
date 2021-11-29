@@ -1,5 +1,14 @@
 ;;; init.el -*- lexical-binding: t; -*-
 
+;;; Fonts
+
+(set-face-attribute 'default nil :height 150 :family "DejaVu Sans Mono")
+(set-face-attribute 'fixed-pitch nil :family "DejaVu Sans Mono")
+(set-face-attribute 'variable-pitch nil :family "DejaVu Sans")
+
+(set-fontset-font t 'emoji "Twemoji" nil 'prepend)
+
+
 ;;; Networking
 
 (setq network-security-level 'high
@@ -13,15 +22,14 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '( which-key gcmh auto-minor-mode openwith pdf-tools rg page-break-lines
-         evil evil-collection flyspell-correct
-         company company-posframe selectrum orderless marginalia
-         fish-completion vterm eshell-vterm eshell-syntax-highlighting esh-help
-         diminish mode-line-bell rainbow-delimiters hl-todo rainbow-mode
-         markdown-mode rust-mode cargo zig-mode
-         cmake-mode toml-mode yaml-mode git-modes
-         eglot yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter
-         magit forge magit-todos))
+      '( gcmh page-break-lines rainbow-delimiters hl-todo diminish evil
+         evil-collection flyspell-correct company company-posframe selectrum
+         orderless marginalia fish-completion vterm eshell-vterm esh-help
+         eshell-syntax-highlighting eglot yasnippet tree-sitter
+         tree-sitter-langs evil-textobj-tree-sitter magit forge magit-todos
+         which-key rg markdown-mode rust-mode cargo zig-mode cmake-mode
+         toml-mode yaml-mode git-modes rainbow-mode auto-minor-mode openwith
+         pdf-tools))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -35,17 +43,6 @@
 
 ;;; Config utils
 
-(defmacro after-frame (&rest body)
-  "Evaluate BODY when frame is available."
-  `(if (daemonp)
-       (let ((wrapper (lambda (self)
-                        (remove-hook 'server-after-make-frame-hook
-                                     (apply-partially self self))
-                        ,@body)))
-         (add-hook 'server-after-make-frame-hook
-                   (apply-partially wrapper wrapper) 90))
-     ,@body))
-
 (defun y-or-n-p-always-y-advice (orig-fun &rest args)
   "Call ORIG-FUN with ARGS, automatically using `y' for `y-or-n-p' questions."
   (cl-letf (((symbol-function #'y-or-n-p) (lambda (_prompt) t)))
@@ -53,13 +50,13 @@
 
 (defun inhibit-redisplay-advice (orig-fun &rest args)
   "Call ORIG-FUN with ARGS with display inhibited."
-    (let ((inhibit-redisplay t))
-      (apply orig-fun args)))
+  (let ((inhibit-redisplay t))
+    (apply orig-fun args)))
 
 (defmacro push-default (newelt var)
   "Add NEWELT to the list stored in the default value of VAR."
   `(setq-default ,var
-        (cons ,newelt (default-value ,var))))
+                 (cons ,newelt (default-value ,var))))
 
 
 ;;; Hide welcome messages
@@ -69,15 +66,6 @@
       server-client-instructions nil)
 
 
-;;; Notes
-
-(setq initial-buffer-choice 'remember-notes
-      remember-notes-initial-major-mode 'markdown-mode
-      remember-data-file "~/Documents/notes/index.md")
-
-(add-hook 'remember-notes-mode-hook (lambda () (setq default-directory "~")))
-
-
 ;;; Reduce confirmations
 
 (defalias 'yes-or-no-p #'y-or-n-p)
@@ -85,12 +73,6 @@
 (setq confirm-kill-processes nil
       kill-buffer-query-functions nil
       auth-source-save-behavior nil)
-
-
-;;; Scroll by single line at window edge
-
-(setq scroll-conservatively 101
-      scroll-margin 0)
 
 
 ;;; Prevent misc file creation
@@ -111,21 +93,19 @@
 (setq select-enable-clipboard nil)
 
 
-;;; Leave frame size alone
-
-(setq frame-resize-pixelwise t
-      frame-inhibit-implied-resize t)
-
-
 ;;; Update files modified on disk
 
-(global-auto-revert-mode 1)
+(global-auto-revert-mode)
+
 (diminish #'auto-revert-mode)
 
 
-;;; Auto close pairs
+;;; Scrolling
 
-(electric-pair-mode)
+(setq scroll-conservatively 101
+      scroll-margin 0)
+
+(pixel-scroll-precision-mode)
 
 
 ;;; Formatting
@@ -139,7 +119,11 @@
 (add-hook 'text-mode #'auto-fill-mode)
 
 
-;;; UI
+;;; Misc UI
+
+(setq mode-line-compact 'long
+      whitespace-style '(face trailing tab-mark missing-newline-at-eof)
+      whitespace-global-modes '(prog-mode text-mode conf-mode))
 
 (blink-cursor-mode -1)
 (window-divider-mode)
@@ -147,8 +131,6 @@
 (column-number-mode)
 (global-whitespace-mode)
 (global-prettify-symbols-mode)
-(global-page-break-lines-mode)
-(mode-line-bell-mode)
 (global-hl-todo-mode)
 
 (dolist (hook '(prog-mode-hook text-mode-hook))
@@ -159,18 +141,50 @@
 (diminish #'abbrev-mode)
 (diminish #'global-whitespace-mode)
 
-(setq mode-line-compact 'long
-      page-break-lines-lighter nil
-      page-break-lines-max-width 80
-      whitespace-style '(face trailing tab-mark missing-newline-at-eof)
-      whitespace-global-modes '(prog-mode text-mode conf-mode))
+(with-eval-after-load 'face-remap
+  (diminish #'buffer-face-mode))
 
-(after-frame
- (load-theme 'my-purple t)
- (set-face-attribute 'default nil :height 150 :family "DejaVu Sans Mono")
- (set-face-attribute 'fixed-pitch nil :family "DejaVu Sans Mono")
- (set-face-attribute 'variable-pitch nil :family "DejaVu Sans")
- (set-fontset-font t 'emoji "Twemoji" nil 'prepend))
+
+;;; Flash active mode line for bell
+
+(defface mode-line-flash nil
+  "Face used for flashing mode line.")
+
+(defvar mode-line-flash-state nil
+  "If non-nil, mode line flash is active.")
+
+(defun mode-line-flash-end ()
+  "End the mode line flash"
+  (when mode-line-flash-state
+    (setq mode-line-flash-state nil)
+    (face-remap-reset-base 'mode-line-active)))
+
+(defun mode-line-flash ()
+  "Flash the mode line."
+  (unless mode-line-flash-state
+    (setq mode-line-flash-state t)
+    (face-remap-set-base 'mode-line-active '(:inherit (mode-line-flash)))
+    (run-with-timer 0.05 nil #'mode-line-flash-end)))
+
+(setq-default ring-bell-function #'mode-line-flash)
+
+
+;;; Display page breaks as lines
+
+(setq page-break-lines-max-width 80
+      page-break-lines-lighter nil)
+
+;; page-break-lines sets the height of its face to the default face height which
+;; breaks text-scale-mode
+(defun page-break-lines-no-set-face-advice (orig-fun &rest args)
+  "Disable set-face-attribute for function."
+  (cl-letf (((symbol-function #'set-face-attribute) (lambda (&rest _))))
+    (apply orig-fun args)))
+
+(advice-add #'page-break-lines--update-display-table :around
+            #'page-break-lines-no-set-face-advice)
+
+(global-page-break-lines-mode)
 
 
 ;;; Performance
@@ -181,26 +195,9 @@
 (global-so-long-mode)
 
 
-;;; Eldoc
+;;; Auto close pairs
 
-(setq eldoc-echo-area-prefer-doc-buffer t
-      eldoc-minor-mode-string " Doc")
-
-
-;;; Ediff
-
-(setq ediff-window-setup-function #'ediff-setup-windows-plain
-      ediff-split-window-function #'split-window-horizontally)
-
-(advice-add #'ediff-quit :around #'y-or-n-p-always-y-advice)
-
-
-;;; Tramp
-
-(with-eval-after-load 'tramp
-  (setq tramp-default-method-alist `((,tramp-local-host-regexp nil "sudo"))
-        tramp-default-method "ssh")
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+(electric-pair-mode)
 
 
 ;;; Evil
@@ -244,37 +241,6 @@
 
 (evil-ex-define-cmd "bd[elete]" #'kill-current-buffer)
 (evil-ex-define-cmd "wbd[elete]" #'save-kill-current-buffer)
-(evil-ex-define-cmd "bdq[uit]" #'kill-buffer-and-window)
-(evil-ex-define-cmd "wbdq[uit]" #'save-kill-buffer-and-window)
-
-
-;;; Spell checking
-
-(setq ispell-dictionary "en_US"
-      ispell-program-name "aspell"
-      ispell-extra-args '("--camel-case")
-      flyspell-issue-message-flag nil
-      flyspell-mode-line-string nil)
-
-(setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
-                                         tree-sitter-hl-face:doc
-                                         tree-sitter-hl-face:string
-                                         font-lock-comment-face
-                                         font-lock-doc-face
-                                         font-lock-string-face))
-
-(defun flyspell-configure-jit-lock ()
-  "Set `flyspell-region' in jit-lock functions matching `flyspell-mode'."
-  (if flyspell-mode
-      (jit-lock-register #'flyspell-region)
-    (jit-lock-unregister #'flyspell-region)))
-
-(add-hook 'flyspell-mode-hook #'flyspell-configure-jit-lock)
-
-(advice-add #'flyspell-region :around #'inhibit-redisplay-advice)
-
-(add-hook 'text-mode-hook #'flyspell-mode)
-(add-hook 'prog-mode-hook #'flyspell-prog-mode)
 
 
 ;;; Completion
@@ -308,31 +274,125 @@
 (define-key company-active-map ["TAB"] #'company-complete)
 
 
-;;; Flymake
+;;; Spell checking
 
-(setq flymake-mode-line-format '(" " flymake-mode-line-counters)
-      flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
-                                         flymake-mode-line-warning-counter "]"))
+(setq ispell-dictionary "en_US"
+      ispell-program-name "aspell"
+      ispell-extra-args '("--camel-case")
+      flyspell-issue-message-flag nil
+      flyspell-mode-line-string nil
+      flyspell-duplicate-distance 0)
+
+(setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
+                                         tree-sitter-hl-face:doc
+                                         tree-sitter-hl-face:string
+                                         font-lock-comment-face
+                                         font-lock-doc-face
+                                         font-lock-string-face))
+
+(defun flyspell-configure-jit-lock ()
+  "Set `flyspell-region' in jit-lock functions matching `flyspell-mode'."
+  (if flyspell-mode
+      (jit-lock-register #'flyspell-region)
+    (jit-lock-unregister #'flyspell-region)))
+
+(add-hook 'flyspell-mode-hook #'flyspell-configure-jit-lock)
+
+(advice-add #'flyspell-region :around #'inhibit-redisplay-advice)
+
+(add-hook 'text-mode-hook #'flyspell-mode)
+(add-hook 'prog-mode-hook #'flyspell-prog-mode)
 
 
-;;; Proced
+;;; Tramp
 
-(setq proced-auto-update-interval 1)
+(with-eval-after-load 'tramp
+  (setq tramp-default-method-alist `((,tramp-local-host-regexp nil "sudo"))
+        tramp-default-method "ssh")
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
+
+;;; LSP
+
+(setq eglot-stay-out-of '(company))
+
+(yas-global-mode)
+
+(diminish #'yas-minor-mode)
+
+(add-hook 'eglot-managed-mode-hook #'evil-lookup-use-eldoc)
+
+(add-hook 'zig-mode-hook #'eglot-ensure)
+(add-hook 'python-mode-hook #'eglot-ensure)
+
+
+;;; Treesitter
+
+(global-tree-sitter-mode)
+
+(diminish #'tree-sitter-mode)
+
+(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+
+(pcase-dolist (`(,type ,key ,class)
+               '((a "c" "comment")
+                 (a "S" "statement")
+                 (a "f" "function")
+                 (i "f" "function")
+                 (a "k" "block")
+                 (i "k" "block")
+                 (a "i" "conditional")
+                 (i "i" "conditional")
+                 (a "P" "parameter")
+                 (i "P" "parameter")
+                 (a "C" "call")
+                 (i "C" "call")
+                 (a "l" "loop")
+                 (i "l" "loop")
+                 (a "L" "class")
+                 (i "L" "class")
+                 (i "S" "scopename")))
+  (let ((map (pcase type
+               ('a evil-outer-text-objects-map)
+               ('i evil-inner-text-objects-map)))
+        (desc (concat "TS " class))
+        (query (concat class (pcase type ('a ".outer") ('i ".inner")))))
+    (define-key map key
+                `(,desc . ,(eval
+                            `(evil-textobj-tree-sitter-get-textobj ,query))))))
 
 
 ;;; Shell
 
 (setq comint-terminfo-terminal "dumb-emacs-ansi")
 
-(setenv "LS_COLORS" (concat "di=38;2;131;140;244:"    ; Directory
-                            "ex=38;2;231;128;255:"    ; Executable
-                            "ln=38;2;102;204;204:"    ; Symlink
-                            "or=38;2;255;128;128:"    ; Broken symlink
-                            "mi=38;2;255;128;128:"    ; Missing file
-                            "pi=38;2;255;128;222:"    ; Named pipe
-                            "bd=38;2;255;128;222:"    ; Block device
-                            "cd=38;2;255;128;222:"    ; Char device
-                            "so=38;2;255;128;222:"))  ; Socket
+(defun set-ls-colors ()
+  "Set LS_COLORS based off of eshell-ls colors."
+  (let (ls-colors)
+    (pcase-dolist (`(,entry ,face)
+                   '(("di" eshell-ls-directory)   ; Directory
+                     ("ex" eshell-ls-executable)  ; Executable
+                     ("ln" eshell-ls-symlink)     ; Symlink
+                     ("mi" eshell-ls-missing)     ; Missing file
+                     ("pi" eshell-ls-special)     ; Named pipe
+                     ("bd" eshell-ls-special)     ; Block device
+                     ("cd" eshell-ls-special)     ; Char device
+                     ("so" eshell-ls-special)))   ; Socket
+      ;; Define face if eshell not loaded yet in order to grab color from theme.
+      (unless (facep face)
+        (eval `(defface ,face nil nil)))
+      (let* ((face-color (face-attribute face :foreground nil t))
+             (r (substring face-color 1 3))
+             (g (substring face-color 3 5))
+             (b (substring face-color 5 7)))
+        ;; Convert to base 10
+        (setq r (number-to-string (string-to-number r 16)))
+        (setq g (number-to-string (string-to-number g 16)))
+        (setq b (number-to-string (string-to-number b 16)))
+        (setq ls-colors (concat ls-colors entry "=38;2;" r ";" g ";" b ":"))))
+    (setenv "LS_COLORS" ls-colors)))
+
+(set-ls-colors)
 
 
 ;;; Eshell
@@ -428,19 +488,6 @@
   ["C-c ESC"] #'vterm-send-escape)
 
 
-;;; Server
-
-(require 'server)
-
-(unless (daemonp)
-  (setq server-name (concat server-name (number-to-string (emacs-pid))))
-  (server-start))
-
-(setenv "EMACS_SOCKET_NAME" (expand-file-name server-name server-socket-dir))
-(setenv "EDITOR" "emacsclient")
-(setenv "VISUAL" "emacsclient")
-
-
 ;;; Magit
 
 (setq magit-view-git-manual-method 'man
@@ -450,6 +497,45 @@
 
 (with-eval-after-load 'magit
   (require 'forge))
+
+
+;;; Ediff
+
+(setq ediff-window-setup-function #'ediff-setup-windows-plain
+      ediff-split-window-function #'split-window-horizontally)
+
+(advice-add #'ediff-quit :around #'y-or-n-p-always-y-advice)
+
+
+;;; Which-key
+
+(setq which-key-idle-delay 0.5
+      which-key-compute-remaps t
+      which-key-sort-order 'which-key-description-order
+      which-key-side-window-max-height 0.5
+      which-key-unicode-correction 0)
+
+(which-key-mode)
+
+(diminish #'which-key-mode)
+
+
+;;; Proced
+
+(setq proced-auto-update-interval 1)
+
+
+;;; Eldoc
+
+(setq eldoc-echo-area-prefer-doc-buffer t
+      eldoc-minor-mode-string " Doc")
+
+
+;;; Flymake
+
+(setq flymake-mode-line-format '(" " flymake-mode-line-counters)
+      flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
+                                         flymake-mode-line-warning-counter "]"))
 
 
 ;;; Info
@@ -462,66 +548,6 @@
 (setq Man-width-max nil)
 
 (add-hook 'Man-mode-hook #'variable-pitch-mode)
-
-
-;;; Which-key
-
-(setq which-key-idle-delay 0.5
-      which-key-compute-remaps t
-      which-key-sort-order 'which-key-description-order
-      which-key-side-window-max-height 0.5
-      which-key-unicode-correction 0)
-
-(which-key-mode)
-(diminish #'which-key-mode)
-
-
-;;; LSP
-
-(setq eglot-stay-out-of '(company))
-
-(yas-global-mode)
-(diminish #'yas-minor-mode)
-
-(add-hook 'eglot-managed-mode-hook #'evil-lookup-use-eldoc)
-
-(add-hook 'zig-mode-hook #'eglot-ensure)
-(add-hook 'python-mode-hook #'eglot-ensure)
-
-
-;;; Treesitter
-
-(global-tree-sitter-mode)
-(diminish #'tree-sitter-mode)
-
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-
-(pcase-dolist (`(,type ,key ,class)
-               '((a "c" "comment")
-                 (a "S" "statement")
-                 (a "f" "function")
-                 (i "f" "function")
-                 (a "k" "block")
-                 (i "k" "block")
-                 (a "i" "conditional")
-                 (i "i" "conditional")
-                 (a "P" "parameter")
-                 (i "P" "parameter")
-                 (a "C" "call")
-                 (i "C" "call")
-                 (a "l" "loop")
-                 (i "l" "loop")
-                 (a "L" "class")
-                 (i "L" "class")
-                 (i "S" "scopename")))
-  (let ((map (pcase type
-               ('a evil-outer-text-objects-map)
-               ('i evil-inner-text-objects-map)))
-        (desc (concat "TS " class))
-        (query (concat class (pcase type ('a ".outer") ('i ".inner")))))
-    (define-key map key
-                `(,desc . ,(eval
-                            `(evil-textobj-tree-sitter-get-textobj ,query))))))
 
 
 ;;; Elisp
@@ -598,13 +624,6 @@
                 (funcall orig-fun size op-type filename offer-raw))))
 
 
-;;; Local configuration
-
-(let ((local-init (concat user-emacs-directory "local-init.el")))
-  (if (file-exists-p local-init)
-      (load-file local-init)))
-
-
 ;;; Commands
 
 (defun save-kill-current-buffer ()
@@ -613,16 +632,30 @@
   (save-buffer)
   (kill-current-buffer))
 
-(defun save-kill-buffer-and-window ()
-  "Save and kill current buffer and window."
-  (interactive)
-  (save-buffer)
-  (kill-buffer-and-window))
-
 (defun esp32c3 ()
   "Serial console for esp32-c3."
   (interactive)
   (serial-term (serial-read-name) 115200))
+
+
+;;; Local configuration
+
+(let ((local-init (concat user-emacs-directory "local-init.el")))
+  (if (file-exists-p local-init)
+      (load-file local-init)))
+
+
+;;; Server
+
+(require 'server)
+
+(unless (daemonp)
+  (setq server-name (concat server-name (number-to-string (emacs-pid))))
+  (server-start))
+
+(setenv "EMACS_SOCKET_NAME" (expand-file-name server-name server-socket-dir))
+(setenv "EDITOR" "emacsclient")
+(setenv "VISUAL" "emacsclient")
 
 
 ;;; Garbage collect when idle
@@ -631,4 +664,5 @@
       gcmh-auto-idle-delay-factor 10)
 
 (gcmh-mode)
+
 (diminish #'gcmh-mode)
