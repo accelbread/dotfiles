@@ -4,6 +4,7 @@
 (custom-theme-set-faces
  'my-purple
  '(default ((t (:background "#262330" :foreground "#E7E4F2"))))
+ '(variable-pitch-text ((t (:inherit (variable-pitch)))))
  '(cursor ((t (:background "#A08BEF"))))
  '(homoglyph ((t (:foreground "#00FFFF" :inherit (bold)))))
  '(escape-glyph ((t (:inherit (homoglyph)))))
@@ -85,6 +86,7 @@
  '(dired-special ((t (:inherit (font-lock-function-name-face)))))
  '(dired-symlink ((t (:inherit (font-lock-constant-face)))))
  '(eshell-prompt ((t (:inherit (minibuffer-prompt)))))
+ '(eshell-input ((t (:inherit (font-lock-function-name-face)))))
  '(eshell-ls-executable ((t (:inherit (font-lock-type-face)))))
  '(eshell-ls-directory ((t (:inherit (dired-directory)))))
  '(eshell-ls-special ((t (:inherit (dired-special)))))

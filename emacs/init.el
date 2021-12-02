@@ -24,12 +24,11 @@
 (setq package-selected-packages
       '( gcmh page-break-lines rainbow-delimiters hl-todo diminish evil
          evil-collection flyspell-correct company company-posframe selectrum
-         orderless marginalia fish-completion vterm eshell-vterm esh-help
-         eshell-syntax-highlighting eglot yasnippet tree-sitter
-         tree-sitter-langs evil-textobj-tree-sitter magit forge magit-todos
-         which-key rg markdown-mode rust-mode cargo zig-mode cmake-mode
-         toml-mode yaml-mode git-modes rainbow-mode auto-minor-mode openwith
-         pdf-tools))
+         orderless marginalia fish-completion vterm eshell-vterm esh-help eglot
+         yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter magit
+         forge magit-todos which-key rg markdown-mode rust-mode cargo zig-mode
+         cmake-mode toml-mode yaml-mode git-modes rainbow-mode auto-minor-mode
+         openwith pdf-tools))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -57,6 +56,10 @@
   "Add NEWELT to the list stored in the default value of VAR."
   `(setq-default ,var
                  (cons ,newelt (default-value ,var))))
+
+(defun set-header-fixed-pitch ()
+  "Set the header-line face to use fixed-pitch in the current buffer."
+  (face-remap-add-relative 'header-line '(:inherit (fixed-pitch))))
 
 
 ;;; Hide welcome messages
@@ -132,6 +135,7 @@
 (global-whitespace-mode)
 (global-prettify-symbols-mode)
 (global-hl-todo-mode)
+(context-menu-mode)
 
 (dolist (hook '(prog-mode-hook text-mode-hook))
   (add-hook hook #'display-fill-column-indicator-mode))
@@ -314,7 +318,8 @@
 
 ;;; LSP
 
-(setq eglot-stay-out-of '(company))
+(setq eglot-stay-out-of '(company)
+      yas-use-menu nil)
 
 (yas-global-mode)
 
@@ -397,23 +402,6 @@
 
 ;;; Eshell
 
-(defun my-eshell-prompt ()
-  "Eshell prompt with last error code and `#' to indicate remote directory."
-  (concat (unless (eshell-exit-success-p)
-            (propertize
-             (number-to-string eshell-last-command-status) 'face 'error))
-          (if (file-remote-p default-directory) "# " "$ ")))
-
-(defun my-eshell-buffer-name ()
-  "Rename eshell buffer to unique name based off of current directory."
-  (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
-
-(defun my-eshell-init ()
-  "Function to run in new eshell buffers."
-  (face-remap-set-base 'nobreak-space nil)
-  (setenv "TERM" "dumb-emacs-ansi")
-  (setenv "GIT_PAGER" ""))
-
 (setq eshell-modules-list '( eshell-basic eshell-cmpl eshell-dirs eshell-glob
                              eshell-hist eshell-ls eshell-pred eshell-prompt
                              eshell-term eshell-tramp eshell-unix)
@@ -424,24 +412,14 @@
       eshell-history-size 512
       eshell-hist-ignoredups t
       eshell-hist-move-to-end nil
-      eshell-prompt-function #'my-eshell-prompt
-      eshell-prompt-regexp "^[0-9]*[$#] "
       eshell-input-filter #'eshell-input-filter-initial-space
       eshell-destroy-buffer-when-process-dies t
-      eshell-ls-archive-regexp ""
-      eshell-ls-backup-regexp ""
-      eshell-ls-clutter-regexp ""
-      eshell-ls-product-regexp "")
-
-(add-hook 'eshell-mode-hook #'fish-completion-mode)
-(add-hook 'eshell-mode-hook #'abbrev-mode)
-(add-hook 'eshell-mode-hook #'my-eshell-init)
-
-(add-hook 'eshell-before-prompt-hook #'eshell-begin-on-new-line)
-(add-hook 'eshell-before-prompt-hook #'my-eshell-buffer-name)
+      eshell-ls-archive-regexp "\\`\\'"
+      eshell-ls-backup-regexp "\\`\\'"
+      eshell-ls-clutter-regexp "\\`\\'"
+      eshell-ls-product-regexp "\\`\\'")
 
 (with-eval-after-load 'eshell
-  (eshell-syntax-highlighting-global-mode)
   (eshell-vterm-mode)
   (setup-esh-help-eldoc))
 
@@ -455,14 +433,48 @@
   ;; Have `$/' evaluate to root of current remote.
   (add-to-list
    'eshell-variable-aliases-list
-   `("/" ,(lambda (_indices) (concat (file-remote-p default-directory) "/")))))
+   `("/" ,(lambda (_indices)
+            (concat (file-remote-p default-directory) "/")))))
 
-(with-eval-after-load 'abbrev
-  (define-abbrev-table 'eshell-mode-abbrev-table
-    '(("gitcl"
-       "git clone --filter=blob:none")
-      ("gitsub"
-       "git submodule update --init --recursive --checkout --depth 1"))))
+(add-hook 'eshell-before-prompt-hook #'eshell-begin-on-new-line)
+
+(defun my-eshell-init ()
+  "Function to run in new eshell buffers."
+  (company-mode -1)
+  (fish-completion-mode)
+  (abbrev-mode)
+  (face-remap-set-base 'nobreak-space nil)
+  (setenv "TERM" "dumb-emacs-ansi")
+  (setenv "GIT_PAGER" ""))
+
+(add-hook 'eshell-mode-hook #'my-eshell-init)
+
+(defun my-eshell-prompt ()
+  "Eshell prompt with last error code and `#' to indicate remote directory."
+  (concat (unless (eshell-exit-success-p)
+            (propertize
+             (number-to-string eshell-last-command-status) 'face 'error))
+          (if (file-remote-p default-directory) "# " "$ ")))
+
+(setq eshell-prompt-function #'my-eshell-prompt
+      eshell-prompt-regexp "^[0-9]*[$#] ")
+
+(defun my-eshell-buffer-name ()
+  "Rename eshell buffer to unique name based off of current directory."
+  (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
+
+(add-hook 'eshell-before-prompt-hook #'my-eshell-buffer-name)
+
+(defface eshell-input nil
+  "Face used for eshell input commands.")
+
+(defun my-eshell-highlight-last-input ()
+  "Highlight last eshell command."
+  (add-text-properties eshell-last-input-start
+                       (1- eshell-last-input-end)
+                       '(face eshell-input)))
+
+(add-hook 'eshell-pre-command-hook #'my-eshell-highlight-last-input)
 
 (defun eshell/e (&rest args)
   "Open files in ARGS."
@@ -476,6 +488,13 @@
 
 (put #'eshell/e 'eshell-no-numeric-conversions t)
 (put #'eshell/e 'eshell-filename-arguments t)
+
+(with-eval-after-load 'abbrev
+  (define-abbrev-table 'eshell-mode-abbrev-table
+    '(("gitcl"
+       "git clone --filter=blob:none")
+      ("gitsub"
+       "git submodule update --init --recursive --checkout --depth 1"))))
 
 
 ;;; Vterm
@@ -496,7 +515,8 @@
       magit-delete-by-moving-to-trash nil)
 
 (with-eval-after-load 'magit
-  (require 'forge))
+  (require 'forge)
+  (remove-hook 'server-switch-hook #'magit-commit-diff))
 
 
 ;;; Ediff
@@ -522,7 +542,22 @@
 
 ;;; Proced
 
-(setq proced-auto-update-interval 1)
+(setq proced-auto-update-interval 3)
+
+(setq-default proced-auto-update-flag t
+              proced-tree-flag t
+              proced-format 'custom
+              proced-filter 'non-kernel)
+
+(with-eval-after-load 'proced
+  (add-to-list 'proced-format-alist
+               '(custom pid user nice pcpu pmem tree (args comm)))
+  (add-to-list 'proced-filter-alist
+               '(non-kernel
+                 (args . (lambda (arg)
+                           (not (string-match "\\`\\[.*]\\'" arg)))))))
+
+(add-hook 'proced-mode-hook #'set-header-fixed-pitch)
 
 
 ;;; Eldoc
@@ -539,6 +574,8 @@
 
 
 ;;; Info
+
+(setq Info-additional-directory-list load-path)
 
 (add-hook 'Info-mode-hook #'variable-pitch-mode)
 
