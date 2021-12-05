@@ -96,6 +96,11 @@
 (setq select-enable-clipboard nil)
 
 
+;;; Increase undo history
+
+(setq kill-ring-max 512)
+
+
 ;;; Update files modified on disk
 
 (global-auto-revert-mode)
