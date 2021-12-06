@@ -26,9 +26,9 @@
          evil-collection flyspell-correct company company-posframe selectrum
          orderless marginalia fish-completion vterm eshell-vterm esh-help eglot
          yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter magit
-         forge magit-todos which-key rg markdown-mode rust-mode cargo zig-mode
-         cmake-mode toml-mode yaml-mode git-modes rainbow-mode auto-minor-mode
-         openwith pdf-tools))
+         magit-todos forge code-review which-key rg markdown-mode rust-mode
+         cargo zig-mode cmake-mode toml-mode yaml-mode git-modes rainbow-mode
+         auto-minor-mode openwith pdf-tools))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
