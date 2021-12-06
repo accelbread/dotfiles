@@ -545,6 +545,13 @@
 (diminish #'which-key-mode)
 
 
+;;; Dired
+
+(setq wdired-allow-to-change-permissions t)
+
+(put #'dired-find-alternate-file 'disabled nil)
+
+
 ;;; Proced
 
 (setq proced-auto-update-interval 3)
