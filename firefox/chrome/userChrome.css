@@ -8,10 +8,6 @@
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
-#webrtcIndicator {
-  display: none;
-}
-
 @-moz-document url(chrome://browser/content/browser.xhtml) {
   .tab-loading-burst {
     display: none;
