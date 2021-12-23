@@ -78,6 +78,12 @@
       auth-source-save-behavior nil)
 
 
+;;; Disable use of dialog boxes
+
+(setq use-dialog-box nil
+      use-file-dialog nil)
+
+
 ;;; Prevent misc file creation
 
 (setq auto-save-file-name-transforms '((".*" "~/.cache/emacs/autosave/" t))
