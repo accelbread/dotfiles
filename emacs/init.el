@@ -130,7 +130,7 @@
 ;;; Misc UI
 
 (setq mode-line-compact 'long
-      whitespace-style '(face trailing tab-mark missing-newline-at-eof)
+      whitespace-style '(face trailing tab-mark tabs missing-newline-at-eof)
       whitespace-global-modes '(prog-mode text-mode conf-mode))
 
 (blink-cursor-mode -1)

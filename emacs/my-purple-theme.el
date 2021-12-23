@@ -52,6 +52,7 @@
  '(lazy-highlight ((t (:inherit secondary-selection))))
  '(next-error ((t (:inherit (region)))))
  '(query-replace ((t (:inherit (isearch)))))
+ '(whitespace-tab ((t (:inherit (shadow)))))
  '(whitespace-trailing ((t (:inherit (secondary-selection)))))
  '(whitespace-missing-newline-at-eof ((t (:inherit (isearch-fail)))))
  '(page-break-lines ((t (:inherit (shadow)))))
