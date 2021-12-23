@@ -160,18 +160,19 @@
   "Face used for flashing mode line.")
 
 (defvar mode-line-flash-state nil
-  "If non-nil, mode line flash is active.")
+  "If non-nil, contains buffer with active mode line flash.")
 
 (defun mode-line-flash-end ()
   "End the mode line flash"
   (when mode-line-flash-state
-    (setq mode-line-flash-state nil)
-    (face-remap-reset-base 'mode-line-active)))
+    (with-current-buffer mode-line-flash-state
+      (face-remap-reset-base 'mode-line-active)
+      (setq mode-line-flash-state nil))))
 
 (defun mode-line-flash ()
   "Flash the mode line."
   (unless mode-line-flash-state
-    (setq mode-line-flash-state t)
+    (setq mode-line-flash-state (current-buffer))
     (face-remap-set-base 'mode-line-active '(:inherit (mode-line-flash)))
     (run-with-timer 0.05 nil #'mode-line-flash-end)))
 
