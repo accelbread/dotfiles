@@ -94,6 +94,7 @@ user_pref("extensions.htmlaboutaddons.recommendations.enabled", false);
 user_pref("extensions.pocket.enabled", false);
 user_pref("extensions.postDownloadThirdPartyPrompt", false);
 user_pref("extensions.screenshots.upload-disabled", true);
+user_pref("full-screen-api.ignore-widgets", true);
 user_pref("geo.provider.network.url", "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%");
 user_pref("gfx.font_rendering.opentype_svg.enabled", false);
 user_pref("gfx.webrender.all", true);
