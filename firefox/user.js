@@ -200,3 +200,8 @@ user_pref("ui.prefersReducedMotion", true);
 user_pref("webchannel.allowObject.urlWhitelist", "");
 user_pref("widget.workspace-management", true);
 user_pref("xpinstall.signatures.required", false);
+
+// FF ESR
+user_pref("browser.tabs.warnOnClose", false);
+user_pref("browser.urlbar.suggest.quicksuggest", false);
+user_pref("security.ssl3.rsa_des_ede3_sha", false);
