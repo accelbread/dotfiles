@@ -213,11 +213,6 @@
 (global-so-long-mode)
 
 
-;;; Auto close pairs
-
-(electric-pair-mode)
-
-
 ;;; Evil
 
 (defun my-evil-lookup-man ()
