@@ -418,6 +418,7 @@
       eshell-history-size 512
       eshell-hist-ignoredups t
       eshell-hist-move-to-end nil
+      eshell-save-history-on-exit nil
       eshell-input-filter #'eshell-input-filter-initial-space
       eshell-destroy-buffer-when-process-dies t
       eshell-ls-archive-regexp "\\`\\'"
@@ -470,6 +471,16 @@
   (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
 
 (add-hook 'eshell-before-prompt-hook #'my-eshell-buffer-name)
+
+(defun my-eshell-save-history ()
+  "Write last command to history file."
+  (when (funcall eshell-input-filter
+                 (buffer-substring eshell-last-input-start
+                                   (1- eshell-last-input-end)))
+    (write-region eshell-last-input-start eshell-last-input-end
+                  eshell-history-file-name t)))
+
+(add-hook 'eshell-pre-command-hook #'my-eshell-save-history)
 
 (defface eshell-input nil
   "Face used for eshell input commands.")
