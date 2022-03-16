@@ -339,9 +339,6 @@
 
 (add-hook 'eglot-managed-mode-hook #'evil-lookup-use-eldoc)
 
-(add-hook 'zig-mode-hook #'eglot-ensure)
-(add-hook 'python-mode-hook #'eglot-ensure)
-
 
 ;;; Treesitter
 
@@ -647,6 +644,22 @@
   (setf (alist-get 'other c-default-style) "stroustrup")
   (add-hook 'c-mode-hook
             (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0]))))
+
+
+;;; Python
+
+(add-hook 'python-mode-hook #'eglot-ensure)
+
+(defun ipython ()
+  "Run ipython in vterm."
+  (interactive)
+  (let ((vterm-shell "ipython"))
+    (vterm-other-window)))
+
+
+;;; Zig
+
+(add-hook 'zig-mode-hook #'eglot-ensure)
 
 
 ;;; Themes
