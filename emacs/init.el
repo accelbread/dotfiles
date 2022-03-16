@@ -517,6 +517,15 @@
   ["C-c ESC"] #'vterm-send-escape)
 
 
+;;; Compilation
+
+(defun compilation-ansi-color ()
+  "Apply ansi-color to compilation buffer output."
+  (ansi-color-apply-on-region compilation-filter-start (point)))
+
+(add-hook 'compilation-filter-hook #'compilation-ansi-color)
+
+
 ;;; Magit
 
 (setq magit-view-git-manual-method 'man
