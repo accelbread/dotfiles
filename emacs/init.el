@@ -677,7 +677,7 @@
 ;;; Open outside Emacs
 
 (setq openwith-associations
-      '(("\\.mkv\\'" "mpv" (file))))
+      '(("\\.mkv\\'" "umpv" (file))))
 
 (openwith-mode)
 
