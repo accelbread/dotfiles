@@ -495,6 +495,10 @@
 (put #'eshell/e 'eshell-no-numeric-conversions t)
 (put #'eshell/e 'eshell-filename-arguments t)
 
+(defalias #'eshell/v #'eshell-exec-visual)
+
+(put #'eshell/v 'eshell-no-numeric-conversions t)
+
 (with-eval-after-load 'abbrev
   (define-abbrev-table 'eshell-mode-abbrev-table
     '(("gitcl"
