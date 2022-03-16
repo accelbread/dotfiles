@@ -500,7 +500,7 @@
     '(("gitcl"
        "git clone --filter=blob:none")
       ("gitsub"
-       "git submodule update --init --recursive --checkout --depth 1"))))
+       "git submodule update --init --recursive --depth 1"))))
 
 
 ;;; Vterm
