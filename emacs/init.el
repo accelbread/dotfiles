@@ -109,6 +109,8 @@
 
 ;;; Update files modified on disk
 
+(setq global-auto-revert-non-file-buffers t)
+
 (global-auto-revert-mode)
 
 (diminish #'auto-revert-mode)
