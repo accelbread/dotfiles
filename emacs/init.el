@@ -23,12 +23,12 @@
 
 (setq package-selected-packages
       '( gcmh page-break-lines rainbow-delimiters hl-todo diminish evil
-         evil-collection flyspell-correct company company-posframe selectrum
-         orderless marginalia fish-completion vterm eshell-vterm esh-help eglot
-         yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter magit
-         magit-todos forge code-review which-key rg markdown-mode rust-mode
-         cargo zig-mode cmake-mode toml-mode yaml-mode git-modes rainbow-mode
-         auto-minor-mode openwith pdf-tools))
+         evil-collection flyspell-correct corfu cape kind-icon selectrum
+         orderless marginalia fish-completion pcmpl-args vterm eshell-vterm
+         esh-help eglot yasnippet tree-sitter tree-sitter-langs
+         evil-textobj-tree-sitter magit magit-todos forge code-review which-key
+         rg markdown-mode rust-mode cargo zig-mode cmake-mode toml-mode
+         yaml-mode git-modes rainbow-mode auto-minor-mode openwith pdf-tools))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -258,33 +258,25 @@
 
 ;;; Completion
 
-(setq completion-styles '(orderless))
+(setq completion-styles '(orderless)
+      completion-at-point-functions '(cape-file cape-dabbrev cape-ispell)
+      cape-dabbrev-min-length 3)
 
 (selectrum-mode)
 (marginalia-mode)
 
-(setq company-minimum-prefix-length 1
-      company-idle-delay 0.0
-      company-require-match nil
-      company-dabbrev-downcase nil
-      company-dabbrev-ignore-case nil
-      company-backends '(company-files
-                         company-capf
-                         (:separate company-dabbrev company-ispell))
-      company-posframe-lighter nil
-      company-posframe-show-indicator nil
-      company-posframe-show-metadata nil
-      company-posframe-quickhelp-delay nil)
+(setq corfu-auto t
+      corfu-auto-prefix 1)
 
-(global-company-mode)
-(company-posframe-mode)
+(corfu-global-mode)
 
-(diminish #'company-mode)
+(require 'kind-icon)
 
-(define-key company-active-map [return] nil)
-(define-key company-active-map ["RET"] nil)
-(define-key company-active-map [tab] #'company-complete)
-(define-key company-active-map ["TAB"] #'company-complete)
+(setq kind-icon-default-face 'corfu-default
+      kind-icon-blend-background nil
+      kind-icon-default-style (plist-put kind-icon-default-style ':height 0.75))
+
+(add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)
 
 
 ;;; Spell checking
@@ -428,7 +420,8 @@
 
 (with-eval-after-load 'eshell
   (eshell-vterm-mode)
-  (setup-esh-help-eldoc))
+  (setup-esh-help-eldoc)
+  (require 'pcmpl-args))
 
 (with-eval-after-load 'esh-cmd
   (dolist (v '(eshell-last-commmand-name
@@ -447,7 +440,6 @@
 
 (defun my-eshell-init ()
   "Function to run in new eshell buffers."
-  (company-mode -1)
   (fish-completion-mode)
   (abbrev-mode)
   (face-remap-set-base 'nobreak-space nil)
