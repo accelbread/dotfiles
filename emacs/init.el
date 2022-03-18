@@ -458,6 +458,9 @@
 (defun my-eshell-init ()
   "Function to run in new eshell buffers."
   (fish-completion-mode)
+  (setq completion-at-point-functions '(cape-file
+                                        pcomplete-completions-at-point
+                                        cape-dabbrev))
   (abbrev-mode)
   (face-remap-set-base 'nobreak-space nil)
   (setenv "TERM" "dumb-emacs-ansi")
