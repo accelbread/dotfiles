@@ -99,6 +99,8 @@
  '(eshell-syntax-highlighting-alias-face ((t (:inherit (font-lock-constant-face)))))
  '(eshell-syntax-highlighting-file-arg-face ((t (:inherit (eshell-ls-directory)))))
  '(eshell-syntax-highlighting-directory-face ((t (:inherit (eshell-ls-directory)))))
+ '(org-block ((t (:inherit (fixed-pitch)))))
+ '(org-code ((t (:inherit (fixed-pitch)))))
  '(term-color-black ((t (:foreground "#1A1821" :background "#1A1821"))))
  '(term-color-red ((t (:foreground "#FF8080" :background "#FF8080"))))
  '(term-color-green ((t (:foreground "#80FF80" :background "#80FF80"))))
