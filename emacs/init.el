@@ -28,7 +28,8 @@
          esh-help eglot yasnippet tree-sitter tree-sitter-langs
          evil-textobj-tree-sitter magit magit-todos forge code-review which-key
          rg markdown-mode rust-mode cargo zig-mode cmake-mode toml-mode
-         yaml-mode git-modes rainbow-mode auto-minor-mode openwith pdf-tools))
+         yaml-mode git-modes rainbow-mode auto-minor-mode openwith pdf-tools
+         org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -132,7 +133,7 @@
 
 (setq sentence-end-double-space nil)
 
-(add-hook 'text-mode #'auto-fill-mode)
+(add-hook 'text-mode-hook #'auto-fill-mode)
 
 
 ;;; Misc UI
@@ -620,6 +621,31 @@
 
 (setq elisp-flymake-byte-compile-load-path
       (append elisp-flymake-byte-compile-load-path load-path))
+
+
+;;; Org
+
+(setq org-elipsis " ▼")
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((shell . t)))
+
+(defun my-org-present-init ()
+  "Configure org-present."
+  (display-fill-column-indicator-mode -1)
+  (org-display-inline-images)
+  (org-present-read-only)
+  (org-present-big)
+  (org-indent-mode))
+
+(defun my-org-present-quit ()
+  "Clean up org-present configuration."
+  (display-fill-column-indicator-mode)
+  (org-indent-mode -1))
+
+(add-hook 'org-present-mode-hook #'my-org-present-init)
+(add-hook 'org-present-mode-quit-hook #'my-org-present-quit)
 
 
 ;;; Markdown
