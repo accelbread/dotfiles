@@ -62,6 +62,14 @@
   "Set the header-line face to use fixed-pitch in the current buffer."
   (face-remap-add-relative 'header-line '(:inherit (fixed-pitch))))
 
+(defun inside-program-text-p (&rest args)
+  "Checks if point is in a comment, string, or doc."
+  (and (cl-some (lambda (face) (memq face flyspell-prog-text-faces))
+                (flatten-tree (get-text-property (1- (point)) 'face)))
+       (not (save-excursion
+              (move-beginning-of-line nil)
+              (looking-at-p "[[:space:]]*#include")))))
+
 
 ;;; Hide welcome messages
 
@@ -306,6 +314,10 @@
 
 (advice-add #'flyspell-region :around #'inhibit-redisplay-advice)
 
+;; flyspell prog is broken when text has multiple faces
+(advice-add #'flyspell-generic-progmode-verify
+            :override #'inside-program-text-p)
+
 (add-hook 'text-mode-hook #'flyspell-mode)
 (add-hook 'prog-mode-hook #'flyspell-prog-mode)
 
@@ -328,6 +340,10 @@
 (diminish #'yas-minor-mode)
 
 (add-hook 'eglot-managed-mode-hook #'evil-lookup-use-eldoc)
+
+;; Force eglot completion to pass to next completion function when in text
+(advice-add #'eglot-completion-at-point
+            :before-until #'inside-program-text-p)
 
 
 ;;; Treesitter
