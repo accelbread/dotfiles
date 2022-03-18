@@ -287,6 +287,22 @@
 
 (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)
 
+(defvar cape-dabbrev-min-prefix 2
+  "Minimum completion prefix length for cape-dabbrev.")
+
+(defun cape-dabbrev-min-prefix-advice (oldfun &optional interactive)
+  "Advise cape-dabbrev to allow specifying minimum prefix for completion."
+  (if interactive
+      (let ((cape-dabbrev-min-prefix 0))
+        (funcall oldfun interactive))
+    (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
+      (let ((beg (match-beginning 0))
+            (end (match-end 0)))
+        (unless (> cape-dabbrev-min-prefix (- end beg))
+          (funcall oldfun))))))
+
+(advice-add #'cape-dabbrev :around #'cape-dabbrev-min-prefix-advice)
+
 
 ;;; Spell checking
 
