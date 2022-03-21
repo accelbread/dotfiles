@@ -24,12 +24,11 @@
 (setq package-selected-packages
       '( gcmh page-break-lines rainbow-delimiters hl-todo diminish evil
          evil-collection flyspell-correct corfu cape kind-icon selectrum
-         orderless marginalia fish-completion pcmpl-args vterm eshell-vterm
-         esh-help eglot yasnippet tree-sitter tree-sitter-langs
-         evil-textobj-tree-sitter magit magit-todos forge code-review which-key
-         rg markdown-mode rust-mode cargo zig-mode cmake-mode toml-mode
-         yaml-mode git-modes rainbow-mode auto-minor-mode openwith pdf-tools
-         org-present))
+         orderless marginalia fish-completion vterm eshell-vterm esh-help eglot
+         yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter magit
+         magit-todos forge code-review which-key rg markdown-mode rust-mode
+         cargo zig-mode cmake-mode toml-mode yaml-mode git-modes rainbow-mode
+         auto-minor-mode openwith pdf-tools org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -62,13 +61,34 @@
   "Set the header-line face to use fixed-pitch in the current buffer."
   (face-remap-add-relative 'header-line '(:inherit (fixed-pitch))))
 
+(defvar program-text-faces '(tree-sitter-hl-face:comment
+                             tree-sitter-hl-face:doc
+                             tree-sitter-hl-face:string
+                             font-lock-comment-face
+                             font-lock-doc-face
+                             font-lock-string-face)
+  "Faces corresponding to text in prog-mode buffers.")
+
+(defvar-local program-text-exception-fn nil
+  "Function to override `inside-program-text-p'.")
+
 (defun inside-program-text-p (&rest args)
   "Checks if point is in a comment, string, or doc."
-  (and (cl-some (lambda (face) (memq face flyspell-prog-text-faces))
-                (flatten-tree (get-text-property (1- (point)) 'face)))
-       (not (save-excursion
-              (move-beginning-of-line nil)
-              (looking-at-p "[[:space:]]*#include")))))
+  (and (seq-some (lambda (face) (memq face program-text-faces))
+                 (ensure-list (get-text-property (1- (point)) 'face)))
+       (or (null program-text-exception-fn)
+           (not (funcall program-text-exception-fn)))))
+
+(defun capf-with-min-prefix (capf length)
+  "Wraps CAPF to only return completions if the prefix is at least LENGTH."
+  (lambda ()
+    (let ((ret (funcall capf)))
+      (pcase ret
+        (`(,start ,end . _)
+         (unless (< length (- end start)) ret))
+        ((pred functionp)
+         (message "capf-with-min-prefix inner capf returned function.")
+         nil)))))
 
 
 ;;; Hide welcome messages
@@ -244,7 +264,6 @@
       evil-vsplit-window-right t
       evil-intercept-esc t
       evil-want-C-u-scroll t
-      evil-ex-complete-emacs-commands t
       evil-lookup-func #'my-evil-lookup-man
       evil-collection-setup-minibuffer t
       evil-collection-want-unimpaired-p nil
@@ -267,8 +286,11 @@
 
 ;;; Completion
 
-(setq completion-styles '(orderless)
-      completion-at-point-functions '(cape-file cape-dabbrev cape-ispell)
+(setq read-extended-command-predicate #'command-completion-default-include-p
+      completion-styles '(orderless)
+      completion-at-point-functions (list #'cape-file
+                                          (cape-super-capf #'cape-dabbrev
+                                                           #'cape-ispell))
       cape-dabbrev-min-length 3)
 
 (selectrum-mode)
@@ -286,22 +308,6 @@
       kind-icon-default-style (plist-put kind-icon-default-style ':height 0.75))
 
 (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)
-
-(defvar cape-dabbrev-min-prefix 2
-  "Minimum completion prefix length for cape-dabbrev.")
-
-(defun cape-dabbrev-min-prefix-advice (oldfun &optional interactive)
-  "Advise cape-dabbrev to allow specifying minimum prefix for completion."
-  (if interactive
-      (let ((cape-dabbrev-min-prefix 0))
-        (funcall oldfun interactive))
-    (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
-      (let ((beg (match-beginning 0))
-            (end (match-end 0)))
-        (unless (> cape-dabbrev-min-prefix (- end beg))
-          (funcall oldfun))))))
-
-(advice-add #'cape-dabbrev :around #'cape-dabbrev-min-prefix-advice)
 
 
 ;;; Spell checking
@@ -330,7 +336,7 @@
 
 (advice-add #'flyspell-region :around #'inhibit-redisplay-advice)
 
-;; flyspell prog is broken when text has multiple faces
+;; flyspell-prog is broken when text has multiple faces
 (advice-add #'flyspell-generic-progmode-verify
             :override #'inside-program-text-p)
 
@@ -348,16 +354,12 @@
 
 ;;; LSP
 
-(setq eglot-stay-out-of '(company)
-      yas-use-menu nil)
-
 (yas-global-mode)
 
 (diminish #'yas-minor-mode)
 
 (add-hook 'eglot-managed-mode-hook #'evil-lookup-use-eldoc)
 
-;; Force eglot completion to pass to next completion function when in text
 (advice-add #'eglot-completion-at-point
             :before-until #'inside-program-text-p)
 
@@ -453,8 +455,7 @@
 
 (with-eval-after-load 'eshell
   (eshell-vterm-mode)
-  (setup-esh-help-eldoc)
-  (require 'pcmpl-args))
+  (setup-esh-help-eldoc))
 
 (with-eval-after-load 'esh-cmd
   (dolist (v '(eshell-last-commmand-name
@@ -496,19 +497,19 @@
 
 (defun my-eshell-buffer-name ()
   "Rename eshell buffer to unique name based off of current directory."
-  (rename-buffer (concat "eshell:" (abbreviate-file-name default-directory)) t))
+  (rename-buffer
+   (concat "*eshell " (abbreviate-file-name default-directory) "*")
+   t))
 
 (add-hook 'eshell-before-prompt-hook #'my-eshell-buffer-name)
 
-(defun my-eshell-save-history ()
-  "Write last command to history file."
-  (when (funcall eshell-input-filter
-                 (buffer-substring eshell-last-input-start
-                                   (1- eshell-last-input-end)))
-    (write-region eshell-last-input-start eshell-last-input-end
-                  eshell-history-file-name t)))
+(defun my-eshell-save-history (input)
+  "Write INPUT to eshell history file."
+  (let ((inhibit-message t)
+        (message-log-max nil))
+    (write-region (concat input "\n") nil eshell-history-file-name t)))
 
-(add-hook 'eshell-pre-command-hook #'my-eshell-save-history)
+(advice-add #'eshell-put-history :after #'my-eshell-save-history)
 
 (defface eshell-input nil
   "Face used for eshell input commands.")
@@ -574,7 +575,8 @@
 
 (with-eval-after-load 'magit
   (require 'forge)
-  (remove-hook 'server-switch-hook #'magit-commit-diff))
+  (remove-hook 'server-switch-hook #'magit-commit-diff)
+  (magit-todos-mode))
 
 
 ;;; Ediff
@@ -698,7 +700,7 @@
 (setq rust-format-on-save t)
 
 (with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer")))
+  (setf (alist-get 'rust-mode eglot-server-programs) '("rust-analyzer"))
   (push-default '(rust-analyzer (checkOnSave (command . "clippy")))
                 eglot-workspace-configuration))
 
@@ -712,12 +714,19 @@
 
 ;;; C
 
-(add-hook 'c-mode-hook #'eglot-ensure)
-
 (with-eval-after-load 'cc-mode
   (setf (alist-get 'other c-default-style) "stroustrup")
   (add-hook 'c-mode-hook
             (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0]))))
+
+(defun my-c-mode-init ()
+  (setq program-text-exception-fn (lambda ()
+                                    (save-excursion
+                                      (back-to-indentation)
+                                      (looking-at-p "#include")))))
+
+(add-hook 'c-mode-hook #'my-c-mode-init)
+(add-hook 'c-mode-hook #'eglot-ensure)
 
 
 ;;; Python
