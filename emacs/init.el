@@ -79,17 +79,6 @@
        (or (null program-text-exception-fn)
            (not (funcall program-text-exception-fn)))))
 
-(defun capf-with-min-prefix (capf length)
-  "Wraps CAPF to only return completions if the prefix is at least LENGTH."
-  (lambda ()
-    (let ((ret (funcall capf)))
-      (pcase ret
-        (`(,start ,end . _)
-         (unless (< length (- end start)) ret))
-        ((pred functionp)
-         (message "capf-with-min-prefix inner capf returned function.")
-         nil)))))
-
 
 ;;; Hide welcome messages
 
@@ -168,7 +157,8 @@
 
 (setq mode-line-compact 'long
       whitespace-style '(face trailing tab-mark tabs missing-newline-at-eof)
-      whitespace-global-modes '(prog-mode text-mode conf-mode))
+      whitespace-global-modes '(prog-mode text-mode conf-mode)
+      mouse-drag-and-drop-region t)
 
 (blink-cursor-mode -1)
 (window-divider-mode)
@@ -267,8 +257,10 @@
       evil-lookup-func #'my-evil-lookup-man
       evil-collection-setup-minibuffer t
       evil-collection-want-unimpaired-p nil
+      evil-collection-term-sync-state-and-mode-p nil
       evil-collection-magit-want-horizontal-movement t
-      evil-collection-magit-use-z-for-folds t)
+      evil-collection-magit-use-z-for-folds t
+      forge-add-default-bindings nil)
 
 (evil-mode)
 (evil-collection-init)
@@ -664,9 +656,8 @@
 
 (setq org-elipsis " ▼")
 
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((shell . t)))
+(org-babel-do-load-languages 'org-babel-load-languages
+                             '((shell . t)))
 
 (defun my-org-present-init ()
   "Configure org-present."
