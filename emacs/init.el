@@ -12,7 +12,11 @@
 ;;; Networking
 
 (setq network-security-level 'high
+      gnutls-verify-error t
+      gnutls-min-prime-bits 3072
       gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2:-VERS-TLS1.1:-VERS-TLS1.0")
+
+(setq auth-sources '("~/.authinfo.gpg"))
 
 
 ;;; Install packages
@@ -151,7 +155,8 @@
 
 (setq-default fill-column 80
               indent-tabs-mode nil
-              tab-always-indent nil)
+              tab-always-indent nil
+              require-final-newline t)
 
 (setq sentence-end-double-space nil)
 
@@ -163,7 +168,8 @@
 (setq mode-line-compact 'long
       whitespace-style '(face trailing tab-mark tabs missing-newline-at-eof)
       whitespace-global-modes '(prog-mode text-mode conf-mode)
-      mouse-drag-and-drop-region t)
+      mouse-drag-and-drop-region t
+      mouse-yank-at-point t)
 
 (blink-cursor-mode -1)
 (window-divider-mode)
@@ -232,7 +238,14 @@
 ;;; Performance
 
 (setq-default bidi-paragraph-direction 'left-to-right)
-(setq bidi-inhibit-bpa t)
+(setq bidi-inhibit-bpa t
+      fast-but-imprecise-scrolling t
+      redisplay-skip-fontification-on-input t
+      auto-mode-case-fold nil
+      pgtk-wait-for-event-timeout 0.001
+      read-process-output-max (* 1024 1024)
+      command-line-ns-option-alist nil
+      remote-file-name-inhibit-cache 60)
 
 (global-so-long-mode)
 
@@ -401,7 +414,8 @@
 
 ;;; Shell
 
-(setq comint-terminfo-terminal "dumb-emacs-ansi")
+(setq comint-terminfo-terminal "dumb-emacs-ansi"
+      comint-prompt-read-only t)
 
 (defun set-ls-colors ()
   "Set LS_COLORS based off of eshell-ls colors."
@@ -816,7 +830,8 @@
 ;;; Garbage collect when idle
 
 (setq gcmh-idle-delay 'auto
-      gcmh-auto-idle-delay-factor 10)
+      gcmh-auto-idle-delay-factor 10
+      gcmh-high-cons-threshold (* 32 1024 1024))
 
 (gcmh-mode)
 
