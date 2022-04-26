@@ -89,9 +89,8 @@
 
 ;;; Reduce confirmations
 
-(defalias 'yes-or-no-p #'y-or-n-p)
-
-(setq confirm-kill-processes nil
+(setq use-short-answers t
+      confirm-kill-processes nil
       kill-buffer-query-functions nil
       auth-source-save-behavior nil)
 
@@ -115,6 +114,11 @@
 (setq pgtk-use-im-context nil)
 
 
+;;; Prevent loop when printing recursive structures
+
+(setq print-circle t)
+
+
 ;;; Disable overwriting of system clipboard with selection
 
 (setq select-enable-clipboard nil)
@@ -122,7 +126,8 @@
 
 ;;; Increase undo history
 
-(setq kill-ring-max 512)
+(setq kill-ring-max 512
+      kill-do-not-save-duplicates t)
 
 
 ;;; Update files modified on disk
@@ -270,6 +275,7 @@
 
 (global-set-key ["<escape>"] #'keyboard-escape-quit)
 
+(evil-global-set-key 'normal ["C-M-u"] #'universal-argument)
 (evil-global-set-key 'normal ["z ="] #'flyspell-correct-at-point)
 
 (evil-ex-define-cmd "bd[elete]" #'kill-current-buffer)
@@ -280,6 +286,7 @@
 
 (setq read-extended-command-predicate #'command-completion-default-include-p
       completion-styles '(orderless)
+      completion-category-defaults nil
       completion-at-point-functions (list #'cape-file
                                           (cape-super-capf #'cape-dabbrev
                                                            #'cape-ispell))
@@ -556,6 +563,11 @@
   (ansi-color-apply-on-region compilation-filter-start (point)))
 
 (add-hook 'compilation-filter-hook #'compilation-ansi-color)
+
+
+;;; Transient
+
+(setq transient-default-level 7)
 
 
 ;;; Magit
