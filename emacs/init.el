@@ -28,8 +28,8 @@
 (setq package-selected-packages
       '( gcmh page-break-lines rainbow-delimiters hl-todo diminish evil
          evil-collection flyspell-correct corfu cape kind-icon selectrum
-         orderless marginalia fish-completion vterm eshell-vterm esh-help eglot
-         yasnippet tree-sitter tree-sitter-langs evil-textobj-tree-sitter magit
+         orderless marginalia fish-completion vterm esh-help eglot yasnippet
+         tree-sitter tree-sitter-langs evil-textobj-tree-sitter magit
          magit-todos forge code-review which-key rg markdown-mode rust-mode
          cargo zig-mode cmake-mode toml-mode yaml-mode git-modes rainbow-mode
          auto-minor-mode openwith pdf-tools org-present))
@@ -467,7 +467,6 @@
       eshell-ls-product-regexp "\\`\\'")
 
 (with-eval-after-load 'eshell
-  (eshell-vterm-mode)
   (setup-esh-help-eldoc))
 
 (with-eval-after-load 'esh-cmd
@@ -534,6 +533,31 @@
                        '(face eshell-input)))
 
 (add-hook 'eshell-pre-command-hook #'my-eshell-highlight-last-input)
+
+(with-eval-after-load 'em-term
+  (require 'vterm))
+
+(defun eshell-exec-visual-vterm-advice (orig-fun &rest args)
+  "Advise `eshell-exec-visual' to use vterm."
+  (cl-letf (((symbol-function #'term-mode) #'ignore)
+            ((symbol-function #'term-exec)
+             (lambda (_ _ program _ args)
+               (let ((vterm-shell (string-join (cons (file-local-name program)
+                                                     args)
+                                               " ")))
+                 (vterm-mode))))
+            ((symbol-function #'term-char-mode) #'ignore)
+            ((symbol-function #'term-set-escape-char) #'ignore))
+    (apply orig-fun args)))
+
+(defun eshell-term-sentinel-vterm-advice (orig-fun &rest args)
+  "Advise `eshell-term-sentinel' to use vterm."
+  (cl-letf ((vterm-kill-buffer-on-exit nil)
+            ((symbol-function #'term-sentinel) #'vterm--sentinel))
+    (apply orig-fun args)))
+
+(advice-add #'eshell-exec-visual :around #'eshell-exec-visual-vterm-advice)
+(advice-add #'eshell-term-sentinel :around #'eshell-term-sentinel-vterm-advice)
 
 (defun eshell/e (&rest args)
   "Open files in ARGS."
