@@ -48,7 +48,7 @@
 
 (defun y-or-n-p-always-y-advice (orig-fun &rest args)
   "Call ORIG-FUN with ARGS, automatically using `y' for `y-or-n-p' questions."
-  (cl-letf (((symbol-function #'y-or-n-p) (lambda (_prompt) t)))
+  (cl-letf (((symbol-function #'y-or-n-p) #'always))
     (apply orig-fun args)))
 
 (defun inhibit-redisplay-advice (orig-fun &rest args)
@@ -554,10 +554,8 @@
 
 (with-eval-after-load 'abbrev
   (define-abbrev-table 'eshell-mode-abbrev-table
-    '(("gitcl"
-       "git clone --filter=blob:none")
-      ("gitsub"
-       "git submodule update --init --recursive --depth 1"))))
+    '(("gitcl" "git clone --filter=blob:none")
+      ("gitsub" "git submodule update --init --recursive --depth 1"))))
 
 
 ;;; Vterm
