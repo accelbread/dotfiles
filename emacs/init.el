@@ -26,13 +26,13 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '( gcmh page-break-lines rainbow-delimiters hl-todo diminish evil
-         evil-collection flyspell-correct corfu cape kind-icon selectrum
-         orderless marginalia fish-completion vterm esh-help eglot yasnippet
-         tree-sitter tree-sitter-langs evil-textobj-tree-sitter magit
-         magit-todos forge code-review which-key rg markdown-mode rust-mode
-         cargo zig-mode cmake-mode toml-mode yaml-mode git-modes rainbow-mode
-         auto-minor-mode openwith pdf-tools org-present))
+      '( gcmh page-break-lines rainbow-delimiters hl-todo evil evil-collection
+         flyspell-correct corfu cape kind-icon selectrum orderless marginalia
+         fish-completion vterm esh-help eglot yasnippet tree-sitter
+         tree-sitter-langs evil-textobj-tree-sitter magit magit-todos forge
+         code-review which-key rg markdown-mode rust-mode cargo zig-mode
+         cmake-mode toml-mode yaml-mode git-modes rainbow-mode auto-minor-mode
+         openwith pdf-tools org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -46,20 +46,22 @@
 
 ;;; Config utils
 
-(defun y-or-n-p-always-y-advice (orig-fun &rest args)
+(defun y-or-n-p-always-y-wrapper (orig-fun &rest args)
   "Call ORIG-FUN with ARGS, automatically using `y' for `y-or-n-p' questions."
   (cl-letf (((symbol-function #'y-or-n-p) #'always))
     (apply orig-fun args)))
 
-(defun inhibit-redisplay-advice (orig-fun &rest args)
+(defun inhibit-redisplay-wrapper (orig-fun &rest args)
   "Call ORIG-FUN with ARGS with display inhibited."
   (let ((inhibit-redisplay t))
     (apply orig-fun args)))
 
 (defmacro push-default (newelt var)
   "Add NEWELT to the list stored in the default value of VAR."
-  `(setq-default ,var
-                 (cons ,newelt (default-value ,var))))
+  `(setq-default ,var (cons ,newelt (default-value ,var))))
+
+(defun hide-minor-mode (mode)
+  (setf (alist-get mode minor-mode-alist) '(nil)))
 
 (defun set-header-fixed-pitch ()
   "Set the header-line face to use fixed-pitch in the current buffer."
@@ -107,7 +109,8 @@
 
 ;;; Prevent misc file creation
 
-(setq auto-save-file-name-transforms '((".*" "~/.cache/emacs/autosave/" t))
+(setq auto-save-file-name-transforms
+      `((".*" ,(file-name-concat user-emacs-directory "auto-save") t))
       make-backup-files nil
       create-lockfiles nil
       custom-file null-device)
@@ -139,8 +142,6 @@
 (setq global-auto-revert-non-file-buffers t)
 
 (global-auto-revert-mode)
-
-(diminish #'auto-revert-mode)
 
 
 ;;; Scrolling
@@ -185,11 +186,11 @@
 
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
-(diminish #'abbrev-mode)
-(diminish #'global-whitespace-mode)
+(hide-minor-mode 'abbrev-mode)
+(hide-minor-mode 'global-whitespace-mode)
 
 (with-eval-after-load 'face-remap
-  (diminish #'buffer-face-mode))
+  (hide-minor-mode 'buffer-face-mode))
 
 
 ;;; Flash active mode line for bell
@@ -222,15 +223,14 @@
 (setq page-break-lines-max-width 80
       page-break-lines-lighter nil)
 
-;; page-break-lines sets the height of its face to the default face height which
-;; breaks text-scale-mode
-(defun page-break-lines-no-set-face-advice (orig-fun &rest args)
-  "Disable set-face-attribute for function."
-  (cl-letf (((symbol-function #'set-face-attribute) (lambda (&rest _))))
-    (apply orig-fun args)))
-
 (advice-add #'page-break-lines--update-display-table :around
-            #'page-break-lines-no-set-face-advice)
+            (lambda (orig-fun &rest args)
+              "Disable `set-face-attribute'.
+`page-break-lines-mode' sets the height of its face to the default face height
+which breaks `text-scale-mode'."
+              (cl-letf (((symbol-function #'set-face-attribute) #'ignore))
+                (apply orig-fun args)))
+            '((name . ignore-setting-face)))
 
 (global-page-break-lines-mode)
 
@@ -346,7 +346,7 @@
 
 (add-hook 'flyspell-mode-hook #'flyspell-configure-jit-lock)
 
-(advice-add #'flyspell-region :around #'inhibit-redisplay-advice)
+(advice-add #'flyspell-region :around #'inhibit-redisplay-wrapper)
 
 ;; flyspell-prog is broken when text has multiple faces
 (advice-add #'flyspell-generic-progmode-verify
@@ -368,7 +368,7 @@
 
 (yas-global-mode)
 
-(diminish #'yas-minor-mode)
+(hide-minor-mode 'yas-minor-mode)
 
 (add-hook 'eglot-managed-mode-hook #'evil-lookup-use-eldoc)
 
@@ -380,7 +380,7 @@
 
 (global-tree-sitter-mode)
 
-(diminish #'tree-sitter-mode)
+(hide-minor-mode 'tree-sitter-mode)
 
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
@@ -493,7 +493,7 @@
   (abbrev-mode)
   (face-remap-set-base 'nobreak-space nil)
   (setenv "TERM" "dumb-emacs-ansi")
-  (setenv "GIT_PAGER" ""))
+  (setenv "GIT_PAGER" "cat"))
 
 (add-hook 'eshell-mode-hook #'my-eshell-init)
 
@@ -534,30 +534,30 @@
 
 (add-hook 'eshell-pre-command-hook #'my-eshell-highlight-last-input)
 
-(with-eval-after-load 'em-term
-  (require 'vterm))
-
-(defun eshell-exec-visual-vterm-advice (orig-fun &rest args)
-  "Advise `eshell-exec-visual' to use vterm."
-  (cl-letf (((symbol-function #'term-mode) #'ignore)
-            ((symbol-function #'term-exec)
-             (lambda (_ _ program _ args)
-               (let ((vterm-shell (string-join (cons (file-local-name program)
+(advice-add #'eshell-exec-visual :around
+            (lambda (orig-fun &rest args)
+              "Advise `eshell-exec-visual' to use vterm."
+              (require 'vterm)
+              (cl-letf (((symbol-function #'term-mode) #'ignore)
+                        ((symbol-function #'term-exec)
+                         (lambda (_ _ program _ args)
+                           (let ((vterm-shell (string-join
+                                               (cons (file-local-name program)
                                                      args)
                                                " ")))
-                 (vterm-mode))))
-            ((symbol-function #'term-char-mode) #'ignore)
-            ((symbol-function #'term-set-escape-char) #'ignore))
-    (apply orig-fun args)))
+                             (vterm-mode))))
+                        ((symbol-function #'term-char-mode) #'ignore)
+                        ((symbol-function #'term-set-escape-char) #'ignore))
+                (apply orig-fun args)))
+            '((name . eshell-visual-vterm)))
 
-(defun eshell-term-sentinel-vterm-advice (orig-fun &rest args)
-  "Advise `eshell-term-sentinel' to use vterm."
-  (cl-letf ((vterm-kill-buffer-on-exit nil)
-            ((symbol-function #'term-sentinel) #'vterm--sentinel))
-    (apply orig-fun args)))
-
-(advice-add #'eshell-exec-visual :around #'eshell-exec-visual-vterm-advice)
-(advice-add #'eshell-term-sentinel :around #'eshell-term-sentinel-vterm-advice)
+(advice-add #'eshell-term-sentinel :around
+            (lambda (orig-fun &rest args)
+              "Advise `eshell-term-sentinel' to use vterm."
+              (cl-letf ((vterm-kill-buffer-on-exit nil)
+                        ((symbol-function #'term-sentinel) #'vterm--sentinel))
+                (apply orig-fun args)))
+            '((name . eshell-visual-vterm)))
 
 (defun eshell/e (&rest args)
   "Open files in ARGS."
@@ -624,7 +624,7 @@
 (setq ediff-window-setup-function #'ediff-setup-windows-plain
       ediff-split-window-function #'split-window-horizontally)
 
-(advice-add #'ediff-quit :around #'y-or-n-p-always-y-advice)
+(advice-add #'ediff-quit :around #'y-or-n-p-always-y-wrapper)
 
 
 ;;; Which-key
@@ -637,7 +637,7 @@
 
 (which-key-mode)
 
-(diminish #'which-key-mode)
+(hide-minor-mode 'which-key-mode)
 
 
 ;;; Dired
@@ -748,7 +748,7 @@
 (add-hook 'toml-mode-hook #'cargo-minor-mode)
 
 (with-eval-after-load 'cargo
-  (diminish #'cargo-minor-mode))
+  (hide-minor-mode 'cargo-minor-mode))
 
 
 ;;; C
@@ -796,7 +796,7 @@
 (pdf-loader-install)
 
 (with-eval-after-load 'pdf-view
-  (diminish #'pdf-view-midnight-minor-mode))
+  (hide-minor-mode 'pdf-view-midnight-minor-mode))
 
 
 ;;; Open outside Emacs
@@ -812,7 +812,8 @@
               (unless (string-match-p
                        (mapconcat #'car openwith-associations "\\|")
                        filename)
-                (funcall orig-fun size op-type filename offer-raw))))
+                (funcall orig-fun size op-type filename offer-raw)))
+            '((name . skip-internal-files)))
 
 
 ;;; Commands
@@ -831,7 +832,7 @@
 
 ;;; Local configuration
 
-(let ((local-init (concat user-emacs-directory "local-init.el")))
+(let ((local-init (file-name-concat user-emacs-directory "local-init.el")))
   (if (file-exists-p local-init)
       (load-file local-init)))
 
@@ -857,4 +858,4 @@
 
 (gcmh-mode)
 
-(diminish #'gcmh-mode)
+(hide-minor-mode 'gcmh-mode)
