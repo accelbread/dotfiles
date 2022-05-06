@@ -30,9 +30,9 @@
          flyspell-correct corfu cape kind-icon selectrum orderless marginalia
          fish-completion vterm esh-help eglot yasnippet tree-sitter
          tree-sitter-langs evil-textobj-tree-sitter magit magit-todos forge
-         code-review which-key rg markdown-mode rust-mode cargo zig-mode
-         cmake-mode toml-mode yaml-mode git-modes rainbow-mode auto-minor-mode
-         openwith pdf-tools org-present))
+         code-review virtual-comment which-key rg markdown-mode rust-mode cargo
+         zig-mode cmake-mode toml-mode yaml-mode git-modes rainbow-mode
+         auto-minor-mode openwith pdf-tools org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -113,7 +113,9 @@
       `((".*" ,(file-name-concat user-emacs-directory "auto-save") t))
       make-backup-files nil
       create-lockfiles nil
-      custom-file null-device)
+      custom-file null-device
+      virtual-comment-default-file
+      (file-name-concat user-emacs-directory "evc"))
 
 
 ;;; Prevent input method from consuming keys
