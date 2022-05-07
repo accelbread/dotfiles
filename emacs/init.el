@@ -314,7 +314,7 @@ which breaks `text-scale-mode'."
 (setq corfu-auto t
       corfu-auto-prefix 1)
 
-(corfu-global-mode)
+(global-corfu-mode)
 
 (require 'kind-icon)
 
