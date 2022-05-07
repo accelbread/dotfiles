@@ -61,6 +61,7 @@
   `(setq-default ,var (cons ,newelt (default-value ,var))))
 
 (defun hide-minor-mode (mode)
+  "Remove display for minor mode MODE from the mode line."
   (setf (alist-get mode minor-mode-alist) '(nil)))
 
 (defun set-header-fixed-pitch ()
