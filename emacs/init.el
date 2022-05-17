@@ -99,7 +99,8 @@
 (setq use-short-answers t
       confirm-kill-processes nil
       kill-buffer-query-functions nil
-      auth-source-save-behavior nil)
+      auth-source-save-behavior nil
+      enable-local-variables :safe)
 
 
 ;;; Disable use of dialog boxes
