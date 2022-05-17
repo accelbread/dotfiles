@@ -237,6 +237,14 @@ which breaks `text-scale-mode'."
 (global-page-break-lines-mode)
 
 
+;;; Lock windows to buffer
+
+(define-minor-mode pin-buffer-mode
+  "Prevent buffer's current window from switching buffers."
+  :lighter " 📌"
+  (set-window-dedicated-p (selected-window) pin-buffer-mode))
+
+
 ;;; Inline annotations
 
 (setq virtual-comment-default-file
