@@ -115,9 +115,7 @@
       `((".*" ,(file-name-concat user-emacs-directory "auto-save") t))
       make-backup-files nil
       create-lockfiles nil
-      custom-file null-device
-      virtual-comment-default-file
-      (file-name-concat user-emacs-directory "evc"))
+      custom-file null-device)
 
 
 ;;; Prevent input method from consuming keys
@@ -237,6 +235,15 @@ which breaks `text-scale-mode'."
             '((name . ignore-setting-face)))
 
 (global-page-break-lines-mode)
+
+
+;;; Inline annotations
+
+(setq virtual-comment-default-file
+      (file-name-concat user-emacs-directory "evc"))
+
+(with-eval-after-load 'virtual-comment
+  (setf (alist-get 'virtual-comment-mode minor-mode-alist) '(" 📝")))
 
 
 ;;; Performance
@@ -674,7 +681,7 @@ which breaks `text-scale-mode'."
 ;;; Eldoc
 
 (setq eldoc-echo-area-prefer-doc-buffer t
-      eldoc-minor-mode-string " Doc")
+      eldoc-minor-mode-string " 📜")
 
 
 ;;; Flymake
