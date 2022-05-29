@@ -6,7 +6,9 @@
 (set-face-attribute 'fixed-pitch nil :family "DejaVu Sans Mono")
 (set-face-attribute 'variable-pitch nil :family "DejaVu Sans")
 
-(set-fontset-font t 'emoji "Twemoji" nil 'prepend)
+(set-fontset-font t 'emoji "Twemoji")
+
+(setf (alist-get "Twemoji" face-font-rescale-alist) 0.9)
 
 
 ;;; Networking
