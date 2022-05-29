@@ -494,6 +494,9 @@ which breaks `text-scale-mode'."
                eshell-last-command-result))
     (make-variable-buffer-local v)))
 
+(with-eval-after-load 'em-tramp
+  (require 'tramp))
+
 (with-eval-after-load 'esh-var
   ;; Have `$/' evaluate to root of current remote.
   (add-to-list
