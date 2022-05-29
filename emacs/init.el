@@ -76,15 +76,10 @@
                              font-lock-string-face)
   "Faces corresponding to text in prog-mode buffers.")
 
-(defvar-local program-text-exception-fn nil
-  "Function to override `inside-program-text-p'.")
-
 (defun inside-program-text-p (&rest args)
   "Checks if point is in a comment, string, or doc."
-  (and (seq-some (lambda (face) (memq face program-text-faces))
-                 (ensure-list (get-text-property (1- (point)) 'face)))
-       (or (null program-text-exception-fn)
-           (not (funcall program-text-exception-fn)))))
+  (memq (car (ensure-list (get-text-property (1- (point)) 'face)))
+        program-text-faces))
 
 
 ;;; Hide welcome messages
@@ -780,14 +775,13 @@ which breaks `text-scale-mode'."
   (add-hook 'c-mode-hook
             (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0]))))
 
-(defun my-c-mode-init ()
-  (setq program-text-exception-fn (lambda ()
-                                    (save-excursion
-                                      (back-to-indentation)
-                                      (looking-at-p "#include")))))
-
-(add-hook 'c-mode-hook #'my-c-mode-init)
 (add-hook 'c-mode-hook #'eglot-ensure)
+
+(add-hook 'c++-mode-hook #'eglot-ensure)
+
+(tree-sitter-hl-add-patterns 'c
+  [(system_lib_string) @constructor
+   (preproc_include (string_literal) @constructor)])
 
 
 ;;; Python
