@@ -83,6 +83,23 @@
   (memq (car (ensure-list (get-text-property (1- (point)) 'face)))
         program-text-faces))
 
+(defvar after-frame-hook nil
+  "Hook for execution after first frame in daemon mode.")
+
+(defun run-after-frame-hook ()
+  "Run and clean up `after-frame-hook'."
+  (remove-hook 'server-after-make-frame-hook #'run-after-frame-hook)
+  (run-hooks 'after-frame-hook)
+  (setq after-frame-hook nil))
+
+(add-hook 'server-after-make-frame-hook #'run-after-frame-hook)
+
+(defmacro after-frame (&rest args)
+  "Run `args' now if not daemon and after first frame if daemon."
+  (if (daemonp)
+       `(add-hook 'after-frame-hook (lambda () ,@args))
+     `(progn ,@args)))
+
 
 ;;; Hide welcome messages
 
@@ -190,6 +207,17 @@
 
 (with-eval-after-load 'face-remap
   (hide-minor-mode 'buffer-face-mode))
+
+
+;;; Non-color emoji in modeline
+
+(create-fontset-from-fontset-spec
+ (font-xlfd-name (font-spec :registry "fontset-bwemoji")))
+
+(set-fontset-font "fontset-bwemoji" 'emoji "Noto Emoji")
+
+(after-frame
+ (set-face-attribute 'mode-line nil :fontset "fontset-bwemoji"))
 
 
 ;;; Flash active mode line for bell
