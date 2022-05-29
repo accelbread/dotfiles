@@ -31,8 +31,8 @@
          fish-completion vterm esh-help eglot yasnippet tree-sitter
          tree-sitter-langs evil-textobj-tree-sitter magit magit-todos forge
          code-review virtual-comment which-key rg markdown-mode rust-mode cargo
-         zig-mode cmake-mode toml-mode yaml-mode git-modes rainbow-mode
-         auto-minor-mode openwith pdf-tools org-present))
+         zig-mode cmake-mode toml-mode yaml-mode git-modes scad-mode
+         rainbow-mode auto-minor-mode openwith pdf-tools org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
