@@ -182,8 +182,7 @@
 
 ;;; Misc UI
 
-(setq mode-line-compact 'long
-      whitespace-style '(face trailing tab-mark tabs missing-newline-at-eof)
+(setq whitespace-style '(face trailing tab-mark tabs missing-newline-at-eof)
       whitespace-global-modes '(prog-mode text-mode conf-mode)
       mouse-drag-and-drop-region t
       mouse-yank-at-point t)
@@ -209,7 +208,10 @@
   (hide-minor-mode 'buffer-face-mode))
 
 
-;;; Non-color emoji in modeline
+;;; Modeline
+
+(setq mode-line-compact 'long
+      mode-line-position-column-line-format '(" %l:%C"))
 
 (create-fontset-from-fontset-spec
  (font-xlfd-name (font-spec :registry "fontset-bwemoji")))
