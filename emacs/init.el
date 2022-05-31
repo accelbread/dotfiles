@@ -343,29 +343,27 @@ which breaks `text-scale-mode'."
 
 ;;; Completion
 
+(require 'kind-icon)
+
 (setq read-extended-command-predicate #'command-completion-default-include-p
       completion-styles '(orderless)
       completion-category-defaults nil
       completion-at-point-functions (list #'cape-file
                                           (cape-super-capf #'cape-dabbrev
                                                            #'cape-ispell))
-      cape-dabbrev-min-length 3)
-
-(selectrum-mode)
-(marginalia-mode)
-
-(setq corfu-auto t
-      corfu-auto-prefix 1)
-
-(global-corfu-mode)
-
-(require 'kind-icon)
-
-(setq kind-icon-default-face 'corfu-default
+      cape-dabbrev-min-length 3
+      corfu-auto t
+      corfu-auto-prefix 1
+      corfu-margin-formatters '(kind-icon-margin-formatter)
+      kind-icon-default-face 'corfu-default
       kind-icon-blend-background nil
       kind-icon-default-style (plist-put kind-icon-default-style ':height 0.75))
 
-(add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)
+(selectrum-mode)
+(marginalia-mode)
+(global-corfu-mode)
+
+(define-key corfu-map ["RET"] nil)
 
 
 ;;; Spell checking
