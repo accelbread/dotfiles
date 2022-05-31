@@ -1,5 +1,3 @@
-require('impatient')
-
 local cmd = vim.cmd
 local opt = vim.opt
 local g = vim.g
@@ -42,10 +40,3 @@ cmd[[
     autocmd FileType mail,markdown setlocal spell
   augroup END
 ]]
-
-function load_config(name)
-  local file = vim.fn.stdpath'config' .. '/cfg/' .. name .. '.lua'
-  if vim.loop.fs_stat(file) then
-    dofile(vim.fn.stdpath'config' .. '/cfg/' .. name .. '.lua')
-  end
-end

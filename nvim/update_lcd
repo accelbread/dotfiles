@@ -1,4 +1,0 @@
-#!/usr/bin/env python3
-from os import getenv, getcwd
-from neovim import attach
-attach('socket', path=getenv('NVIM_LISTEN_ADDRESS')).command('silent lcd ' + getcwd())
