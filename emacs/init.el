@@ -793,10 +793,12 @@ which breaks `text-scale-mode'."
 ;;; Which-key
 
 (setq which-key-idle-delay 0.5
+      which-key-show-early-on-C-h t
       which-key-compute-remaps t
-      which-key-sort-order 'which-key-description-order
-      which-key-side-window-max-height 0.5
-      which-key-unicode-correction 0)
+      which-key-sort-order 'which-key-local-then-key-order
+      which-key-sort-uppercase-first nil
+      which-key-unicode-correction 0
+      which-key-side-window-max-height 0.5)
 
 (which-key-mode)
 
