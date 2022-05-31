@@ -28,13 +28,13 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '( gcmh page-break-lines rainbow-delimiters hl-todo evil evil-collection
-         flyspell-correct corfu cape kind-icon selectrum orderless marginalia
-         fish-completion vterm esh-help eglot yasnippet tree-sitter
-         tree-sitter-langs evil-textobj-tree-sitter magit magit-todos forge
-         code-review virtual-comment which-key rg markdown-mode rust-mode cargo
-         zig-mode cmake-mode toml-mode yaml-mode git-modes scad-mode
-         rainbow-mode auto-minor-mode openwith pdf-tools org-present))
+      '( meow gcmh page-break-lines rainbow-delimiters hl-todo flyspell-correct
+         corfu cape kind-icon selectrum orderless marginalia fish-completion
+         vterm esh-help eglot yasnippet tree-sitter tree-sitter-langs magit
+         magit-todos forge code-review virtual-comment which-key rg
+         markdown-mode rust-mode cargo zig-mode cmake-mode toml-mode yaml-mode
+         git-modes scad-mode rainbow-mode auto-minor-mode openwith pdf-tools
+         org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -116,6 +116,8 @@
       auth-source-save-behavior nil
       enable-local-variables :safe)
 
+(global-set-key ["C-x k"] 'kill-current-buffer)
+
 
 ;;; Disable use of dialog boxes
 
@@ -163,7 +165,8 @@
 ;;; Scrolling
 
 (setq scroll-conservatively 101
-      scroll-margin 0)
+      scroll-margin 0
+      next-screen-context-lines 3)
 
 (pixel-scroll-precision-mode)
 
@@ -296,49 +299,115 @@ which breaks `text-scale-mode'."
 (global-so-long-mode)
 
 
-;;; Evil
+;;; Meow
 
-(defun my-evil-lookup-man ()
-  "Open man page for term at point."
-  (call-interactively #'man-follow))
+(require 'meow)
 
-(defun evil-lookup-use-eldoc ()
-  "Set `evil-lookup-func' to use eldoc in current buffer."
+(setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
+
+(defun meow-toggle-normal ()
+  "Switch between normal and motion modes."
   (interactive)
-  (setq-local evil-lookup-func #'eldoc-print-current-symbol-info))
+  (if (meow-normal-mode-p)
+      (meow-motion-mode)
+    (meow-normal-mode)))
 
-(setq evil-want-integration t
-      evil-want-keybinding nil
-      evil-want-minibuffer t
-      evil-undo-system 'undo-redo
-      evil-search-module 'evil-search
-      evil-cross-lines t
-      evil-want-Y-yank-to-eol t
-      evil-split-window-below t
-      evil-vsplit-window-right t
-      evil-intercept-esc t
-      evil-want-C-u-scroll t
-      evil-lookup-func #'my-evil-lookup-man
-      evil-collection-setup-minibuffer t
-      evil-collection-want-unimpaired-p nil
-      evil-collection-term-sync-state-and-mode-p nil
-      evil-collection-magit-want-horizontal-movement t
-      evil-collection-magit-use-z-for-folds t
-      forge-add-default-bindings nil)
+(meow-motion-overwrite-define-key
+ '("h" . meow-left)
+ '("j" . meow-next)
+ '("k" . meow-prev)
+ '("l" . meow-right)
+ '("<escape>" . ignore))
 
-(evil-mode)
-(evil-collection-init)
+(meow-leader-define-key
+ '("H" . "H-h")
+ '("j" . "H-j")
+ '("k" . "H-k")
+ '("l" . "H-l")
+ '("1" . meow-digit-argument)
+ '("2" . meow-digit-argument)
+ '("3" . meow-digit-argument)
+ '("4" . meow-digit-argument)
+ '("5" . meow-digit-argument)
+ '("6" . meow-digit-argument)
+ '("7" . meow-digit-argument)
+ '("8" . meow-digit-argument)
+ '("9" . meow-digit-argument)
+ '("0" . meow-digit-argument)
+ '("-" . negative-argument)
+ '("/" . meow-keypad-describe-key)
+ '("?" . meow-cheatsheet)
+ '("r" . rg-menu)
+ '("n" . meow-toggle-normal))
 
-(evil-set-type 'evil-backward-word-begin 'inclusive)
-(evil-set-type 'evil-backward-WORD-begin 'inclusive)
+(meow-normal-define-key
+ '("0" . meow-expand-0)
+ '("1" . meow-expand-1)
+ '("2" . meow-expand-2)
+ '("3" . meow-expand-3)
+ '("4" . meow-expand-4)
+ '("5" . meow-expand-5)
+ '("6" . meow-expand-6)
+ '("7" . meow-expand-7)
+ '("8" . meow-expand-8)
+ '("9" . meow-expand-9)
+ '("-" . negative-argument)
+ '(";" . meow-reverse)
+ '(":" . execute-extended-command)
+ '("." . meow-inner-of-thing)
+ '("," . meow-bounds-of-thing)
+ '("<" . meow-beginning-of-thing)
+ '(">" . meow-end-of-thing)
+ '("[" . beginning-of-defun)
+ '("]" . end-of-defun)
+ '("?" . which-key-show-top-level)
+ '("a" . meow-append)
+ '("A" . meow-open-below)
+ '("b" . meow-back-word)
+ '("B" . meow-back-symbol)
+ '("c" . meow-change)
+ '("C" . query-replace-regexp)
+ '("d" . meow-delete)
+ '("D" . meow-backward-delete)
+ '("e" . meow-next-word)
+ '("E" . meow-next-symbol)
+ '("f" . meow-find)
+ '("g" . meow-cancel-selection)
+ '("G" . meow-grab)
+ '("h" . meow-left)
+ '("H" . meow-left-expand)
+ '("i" . meow-insert)
+ '("I" . meow-open-above)
+ '("j" . meow-next)
+ '("J" . meow-next-expand)
+ '("k" . meow-prev)
+ '("K" . meow-prev-expand)
+ '("l" . meow-right)
+ '("L" . meow-right-expand)
+ '("m" . meow-join)
+ '("n" . meow-search)
+ '("o" . meow-block)
+ '("O" . meow-to-block)
+ '("p" . meow-yank)
+ '("P" . meow-replace)
+ '("q" . meow-quit)
+ '("r" . undo-redo)
+ '("R" . repeat)
+ '("s" . meow-kill)
+ '("S" . meow-swap-grab)
+ '("t" . meow-till)
+ '("u" . undo-only)
+ '("v" . meow-visit)
+ '("w" . meow-mark-word)
+ '("W" . meow-mark-symbol)
+ '("x" . meow-line)
+ '("X" . meow-goto-line)
+ '("y" . meow-save)
+ '("Y" . meow-sync-grab)
+ '("z" . meow-pop-selection)
+ '("<escape>" . ignore))
 
-(global-set-key ["<escape>"] #'keyboard-escape-quit)
-
-(evil-global-set-key 'normal ["C-M-u"] #'universal-argument)
-(evil-global-set-key 'normal ["z ="] #'flyspell-correct-at-point)
-
-(evil-ex-define-cmd "bd[elete]" #'kill-current-buffer)
-(evil-ex-define-cmd "wbd[elete]" #'save-kill-current-buffer)
+(meow-global-mode)
 
 
 ;;; Completion
@@ -414,8 +483,6 @@ which breaks `text-scale-mode'."
 
 (hide-minor-mode 'yas-minor-mode)
 
-(add-hook 'eglot-managed-mode-hook #'evil-lookup-use-eldoc)
-
 (advice-add #'eglot-completion-at-point
             :before-until #'inside-program-text-p)
 
@@ -428,38 +495,17 @@ which breaks `text-scale-mode'."
 
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
-(pcase-dolist (`(,type ,key ,class)
-               '((a "c" "comment")
-                 (a "S" "statement")
-                 (a "f" "function")
-                 (i "f" "function")
-                 (a "k" "block")
-                 (i "k" "block")
-                 (a "i" "conditional")
-                 (i "i" "conditional")
-                 (a "P" "parameter")
-                 (i "P" "parameter")
-                 (a "C" "call")
-                 (i "C" "call")
-                 (a "l" "loop")
-                 (i "l" "loop")
-                 (a "L" "class")
-                 (i "L" "class")
-                 (i "S" "scopename")))
-  (let ((map (pcase type
-               ('a evil-outer-text-objects-map)
-               ('i evil-inner-text-objects-map)))
-        (desc (concat "TS " class))
-        (query (concat class (pcase type ('a ".outer") ('i ".inner")))))
-    (define-key map key
-                `(,desc . ,(eval
-                            `(evil-textobj-tree-sitter-get-textobj ,query))))))
-
 
 ;;; Shell
 
 (setq comint-terminfo-terminal "dumb-emacs-ansi"
       comint-prompt-read-only t)
+
+(with-eval-after-load 'comint
+  (define-key comint-mode-map
+              [remap beginning-of-defun] #'comint-previous-prompt)
+  (define-key comint-mode-map
+              [remap end-of-defun] #'comint-next-prompt))
 
 (defun set-ls-colors ()
   "Set LS_COLORS based off of eshell-ls colors."
@@ -524,6 +570,12 @@ which breaks `text-scale-mode'."
 
 (with-eval-after-load 'em-tramp
   (require 'tramp))
+
+(with-eval-after-load 'esh-mode
+  (define-key eshell-mode-map
+              [remap beginning-of-defun] #'eshell-previous-prompt)
+  (define-key eshell-mode-map
+              [remap end-of-defun] #'eshell-next-prompt))
 
 (with-eval-after-load 'esh-var
   ;; Have `$/' evaluate to root of current remote.
@@ -636,10 +688,71 @@ which breaks `text-scale-mode'."
 
 (setq vterm-max-scrollback 5000
       vterm-timer-delay 0.01
-      vterm-buffer-name-string "vterm:%s")
+      vterm-buffer-name-string "*vterm %s*"
+      vterm-keymap-exceptions '("C-c"))
 
-(evil-define-key '(normal insert) vterm-mode-map
-  ["C-c ESC"] #'vterm-send-escape)
+(with-eval-after-load 'vterm
+  (define-key vterm-mode-map ["C-c ESC"] #'vterm-send-escape))
+
+(defvar-keymap vterm-normal-mode-map
+  "RET" #'vterm-send-return)
+
+(define-key vterm-normal-mode-map
+            [remap yank] #'vterm-yank)
+(define-key vterm-normal-mode-map
+            [remap xterm-paste] #'vterm-xterm-paste)
+(define-key vterm-normal-mode-map
+            [remap yank-pop] #'vterm-yank-pop)
+(define-key vterm-normal-mode-map
+            [remap mouse-yank-primary] #'vterm-yank-primary)
+(define-key vterm-normal-mode-map
+            [remap self-insert-command] #'vterm--self-insert)
+(define-key vterm-normal-mode-map
+            [remap beginning-of-defun] #'vterm-previous-prompt)
+(define-key vterm-normal-mode-map
+            [remap end-of-defun] #'vterm-next-prompt)
+
+(add-hook 'vterm-mode-hook
+          (lambda ()
+            (add-hook 'meow-normal-mode-hook
+                      (lambda () (use-local-map vterm-normal-mode-map))
+                      nil t)
+            (add-hook 'meow-insert-mode-hook
+                      (lambda ()
+                        (use-local-map vterm-mode-map)
+                        (vterm-goto-char (point)))
+                      nil t)))
+
+
+;;; Term
+
+(with-eval-after-load 'term
+  (set-keymap-parent term-raw-escape-map nil)
+  (define-key term-raw-escape-map ["ESC"] #'term-send-raw)
+  (define-key term-mode-map ["C-c ESC"] #'term-send-raw))
+
+(defvar-local meow-term-insert-char t)
+
+(advice-add #'term-char-mode :before-while #'meow-insert-mode-p)
+
+(advice-add #'term-char-mode :after
+            (lambda () (setq meow-term-insert-char t)))
+
+(advice-add #'term-line-mode :after
+            (lambda () (setq meow-term-insert-char nil)))
+
+(add-hook 'term-mode-hook
+          (lambda ()
+            (add-hook 'meow-normal-mode-hook
+                      (lambda ()
+                        (let (meow-term-insert-char)
+                          (term-line-mode)))
+                      nil t)
+            (add-hook 'meow-insert-mode-hook
+                      (lambda ()
+                        (when meow-term-insert-char
+                            (term-char-mode)))
+                      nil t)))
 
 
 ;;; Compilation
