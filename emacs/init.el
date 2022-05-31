@@ -916,7 +916,7 @@ which breaks `text-scale-mode'."
   (hide-minor-mode 'cargo-minor-mode))
 
 
-;;; C
+;;; C/C++
 
 (with-eval-after-load 'cc-mode
   (setf (alist-get 'other c-default-style) "stroustrup")
@@ -988,8 +988,8 @@ which breaks `text-scale-mode'."
   (save-buffer)
   (kill-current-buffer))
 
-(defun esp32c3 ()
-  "Serial console for esp32-c3."
+(defun serial-115200 ()
+  "Serial console with 115200 baud rate."
   (interactive)
   (serial-term (serial-read-name) 115200))
 
