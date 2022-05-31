@@ -1,16 +1,15 @@
 HISTFILE="$HOME/.local/share/zsh/history"
 
-dircolors -b /etc/DIR_COLORS | source /dev/stdin
+if [[ ! -v LS_COLORS ]]; then
+    dircolors -b /etc/DIR_COLORS | source /dev/stdin
+fi
 
-# Lines configured by zsh-newuser-install
 HISTSIZE=1000
 SAVEHIST=1000
-setopt appendhistory autocd nomatch promptsubst histignorespace
-unsetopt notify
-bindkey -v
-# End of lines configured by zsh-newuser-install
-# The following lines were added by compinstall
+setopt appendhistory autocd nomatch promptsubst histignorespace nobeep nonotify
+bindkey -e
 
+# The following lines were added by compinstall
 zstyle ':completion:*' list-colors "${(@s.:.)LS_COLORS}"
 zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
 zstyle ':completion:*' menu select=1
@@ -24,58 +23,10 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
-setopt NO_BEEP
-
-if [[ -v NVIM_LISTEN_ADDRESS ]]; then
-    function chpwd() {
-        ~/.config/nvim/update_lcd
-    }
-fi
-
-mode_color='0;0;0'
-if [[ "$TERM" != "linux"  ]]; then
-    prompt_end="❭"
-else
-    prompt_end=")"
-fi
-PROMPT=$'%(?..%B%F{1}%? %b%f)%{\x1b[38;2;${mode_color}m%}%1/'$prompt_end$' %{\x1b[0m%}'
-
-mode_cmd_color=$(printf "%d;%d;%d\n" 0x${COLOR_HIGH:1:2} 0x${COLOR_HIGH:3:2} 0x${COLOR_HIGH:5:2})
-mode_ins_color=$(printf "%d;%d;%d\n" 0x${COLOR_NORM:1:2} 0x${COLOR_NORM:3:2} 0x${COLOR_NORM:5:2})
-
-zle-keymap-select() {
-  case "$KEYMAP" in
-    vicmd)
-        mode_color=$mode_cmd_color;;
-    viins|main)
-        mode_color=$mode_ins_color;;
-  esac
-  zle reset-prompt
-}
-zle -N zle-keymap-select
-
-# Stay in previous mode
-zle-line-finish() {
-  prev_mode=$KEYMAP
-}
-zle-line-init() {
-  zle -K ${prev_mode:-main}
-  zle-keymap-select
-}
-zle -N zle-line-finish
-zle -N zle-line-init
+prompt_color=$(printf "%d;%d;%d\n" 0x${COLOR_NORM:1:2} 0x${COLOR_NORM:3:2} 0x${COLOR_NORM:5:2})
+PROMPT=$'%(?..%B%F{1}%? %b%f)%{\x1b[38;2;${prompt_color}m%}%1/> %{\x1b[0m%}'
 
 precmd () {print -Pn "\e]2;%~\a"}
-
-
-# Lower delay in switching vi mode
-export KEYTIMEOUT=1
-
-# Vi mode: allow delete before position insert mode entered in
-bindkey "^?" backward-delete-char
-bindkey "^W" backward-kill-word
-bindkey "^H" backward-delete-char
-bindkey "^U" backward-kill-line
 
 alias grep='grep --color=auto'
 alias ls='ls --color=auto'

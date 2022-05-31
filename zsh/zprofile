@@ -5,6 +5,7 @@ export BROWSER=firefox
 
 export RUST_SRC_PATH='/usr/lib/rustlib/src/rust/src'
 export PYTHONSTARTUP="$HOME/.config/python/pythonrc"
+export ASPELL_CONF="home-dir $HOME/.config/aspell/"
 export MPD_HOST="$HOME/.local/share/mpd/socket"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CURRENT_DESKTOP=X-Generic
