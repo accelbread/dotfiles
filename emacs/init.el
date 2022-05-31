@@ -489,6 +489,9 @@ which breaks `text-scale-mode'."
 
 (set-ls-colors)
 
+(advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+(advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
+
 
 ;;; Eshell
 
