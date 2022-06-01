@@ -312,6 +312,25 @@ which breaks `text-scale-mode'."
       (meow-motion-mode)
     (meow-normal-mode)))
 
+(defun meow-kill-or-delete ()
+  "Kill if region active, else delete."
+  (interactive)
+  (if (use-region-p)
+      (meow-kill)
+    (meow-delete)))
+
+(defvar-keymap window-traverse-map
+  "h" #'windmove-left
+  "j" #'windmove-down
+  "k" #'windmove-up
+  "l" #'windmove-right
+  "s" #'other-window)
+
+(defun window-traverse ()
+  "Activate window movement keymap."
+  (interactive)
+  (set-transient-map window-traverse-map t))
+
 (meow-motion-overwrite-define-key
  '("h" . meow-left)
  '("j" . meow-next)
@@ -338,7 +357,8 @@ which breaks `text-scale-mode'."
  '("/" . meow-keypad-describe-key)
  '("?" . meow-cheatsheet)
  '("r" . rg-menu)
- '("n" . meow-toggle-normal))
+ '("n" . meow-toggle-normal)
+ '("w" . window-traverse))
 
 (meow-normal-define-key
  '("0" . meow-expand-0)
@@ -367,7 +387,7 @@ which breaks `text-scale-mode'."
  '("B" . meow-back-symbol)
  '("c" . meow-change)
  '("C" . query-replace-regexp)
- '("d" . meow-delete)
+ '("d" . meow-kill-or-delete)
  '("D" . meow-backward-delete)
  '("e" . meow-next-word)
  '("E" . meow-next-symbol)
@@ -393,7 +413,6 @@ which breaks `text-scale-mode'."
  '("q" . meow-quit)
  '("r" . undo-redo)
  '("R" . repeat)
- '("s" . meow-kill)
  '("S" . meow-swap-grab)
  '("t" . meow-till)
  '("u" . undo-only)
