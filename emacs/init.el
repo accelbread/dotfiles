@@ -29,12 +29,12 @@
 
 (setq package-selected-packages
       '( meow gcmh page-break-lines rainbow-delimiters hl-todo flyspell-correct
-         corfu cape kind-icon selectrum orderless marginalia fish-completion
-         vterm esh-help eglot yasnippet tree-sitter tree-sitter-langs magit
-         magit-todos forge code-review virtual-comment which-key rg
-         markdown-mode rust-mode cargo zig-mode cmake-mode toml-mode yaml-mode
-         git-modes scad-mode rainbow-mode auto-minor-mode openwith pdf-tools
-         org-present))
+         corfu corfu-doc cape kind-icon selectrum orderless marginalia
+         fish-completion vterm esh-help eglot yasnippet tree-sitter
+         tree-sitter-langs magit magit-todos forge code-review virtual-comment
+         which-key rg markdown-mode rust-mode cargo zig-mode cmake-mode
+         toml-mode yaml-mode git-modes scad-mode rainbow-mode auto-minor-mode
+         openwith pdf-tools org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -450,8 +450,14 @@ which breaks `text-scale-mode'."
 (selectrum-mode)
 (marginalia-mode)
 (global-corfu-mode)
+(corfu-doc-mode)
 
 (define-key corfu-map ["RET"] nil)
+
+(define-key corfu-map ["M-p"] #'corfu-doc-scroll-down)
+(define-key corfu-map ["M-n"] #'corfu-doc-scroll-up)
+
+(add-hook 'meow-normal-mode-hook #'corfu-quit)
 
 
 ;;; Spell checking
