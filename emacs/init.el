@@ -763,28 +763,42 @@ which breaks `text-scale-mode'."
   (define-key term-raw-escape-map ["ESC"] #'term-send-raw)
   (define-key term-mode-map ["C-c ESC"] #'term-send-raw))
 
-(defvar-local meow-term-insert-char t)
+(defvar-local meow-term-char t)
 
-(advice-add #'term-char-mode :before-while #'meow-insert-mode-p)
+(advice-add #'term-char-mode :before-while
+            (lambda ()
+              (setq meow-term-char t)
+              (term-update-mode-line)
+              (meow-insert-mode-p)))
 
-(advice-add #'term-char-mode :after
-            (lambda () (setq meow-term-insert-char t)))
-
-(advice-add #'term-line-mode :after
-            (lambda () (setq meow-term-insert-char nil)))
+(advice-add #'term-line-mode :before
+            (lambda ()
+              (setq meow-term-char nil)
+              (term-update-mode-line)))
 
 (add-hook 'term-mode-hook
           (lambda ()
             (add-hook 'meow-normal-mode-hook
                       (lambda ()
-                        (let (meow-term-insert-char)
-                          (term-line-mode)))
+                        (let ((meow-term-char-temp meow-term-char))
+                          (term-line-mode)
+                          (setq meow-term-char meow-term-char-temp)
+                          (term-update-mode-line)))
                       nil t)
             (add-hook 'meow-insert-mode-hook
                       (lambda ()
-                        (when meow-term-insert-char
+                        (when meow-term-char
                             (term-char-mode)))
                       nil t)))
+
+(advice-add #'term-update-mode-line :around
+            (lambda (oldfun)
+              (if meow-term-char
+                  (let ((real-map (current-local-map)))
+                    (use-local-map term-raw-map)
+                    (funcall oldfun)
+                    (use-local-map real-map))
+                (funcall oldfun))))
 
 
 ;;; Compilation
