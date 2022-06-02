@@ -151,7 +151,9 @@
 
 ;;; Increase undo history
 
-(setq kill-ring-max 512
+(setq undo-limit (* 4 1024 1024)
+      undo-strong-limit (* 6 1024 1024)
+      kill-ring-max 512
       kill-do-not-save-duplicates t)
 
 
@@ -187,6 +189,8 @@
 
 (setq whitespace-style '(face trailing tab-mark tabs missing-newline-at-eof)
       whitespace-global-modes '(prog-mode text-mode conf-mode)
+      resize-mini-windows t
+      enable-recursive-minibuffers t
       mouse-drag-and-drop-region t
       mouse-yank-at-point t)
 
@@ -288,11 +292,13 @@ which breaks `text-scale-mode'."
 
 (setq-default bidi-paragraph-direction 'left-to-right)
 (setq bidi-inhibit-bpa t
+      auto-window-vscroll nil
       fast-but-imprecise-scrolling t
       redisplay-skip-fontification-on-input t
       auto-mode-case-fold nil
       pgtk-wait-for-event-timeout 0.001
       read-process-output-max (* 1024 1024)
+      process-adaptive-read-buffering nil
       command-line-ns-option-alist nil
       remote-file-name-inhibit-cache 60)
 
@@ -620,7 +626,8 @@ which breaks `text-scale-mode'."
   (abbrev-mode)
   (face-remap-set-base 'nobreak-space nil)
   (setenv "TERM" "dumb-emacs-ansi")
-  (setenv "GIT_PAGER" "cat"))
+  (setenv "GIT_PAGER" "cat")
+  (setenv "PAGER" "cat"))
 
 (add-hook 'eshell-mode-hook #'my-eshell-init)
 
