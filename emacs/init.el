@@ -577,6 +577,7 @@ which breaks `text-scale-mode'."
                              eshell-term eshell-tramp eshell-unix)
       eshell-error-if-no-glob t
       eshell-glob-include-dot-dot nil
+      eshell-glob-chars-list '(?\] ?\[ ?*)
       eshell-ask-to-save-last-dir nil
       eshell-buffer-maximum-lines 5000
       eshell-history-size 512
@@ -585,6 +586,7 @@ which breaks `text-scale-mode'."
       eshell-save-history-on-exit nil
       eshell-input-filter #'eshell-input-filter-initial-space
       eshell-destroy-buffer-when-process-dies t
+      eshell-cd-on-directory nil
       eshell-ls-archive-regexp "\\`\\'"
       eshell-ls-backup-regexp "\\`\\'"
       eshell-ls-clutter-regexp "\\`\\'"
@@ -597,12 +599,20 @@ which breaks `text-scale-mode'."
   (dolist (v '(eshell-last-commmand-name
                eshell-last-command-status
                eshell-last-command-result))
-    (make-variable-buffer-local v)))
+    (make-variable-buffer-local v))
+  (push "echo" eshell-complex-commands))
+
+(with-eval-after-load 'esh-proc
+  (push "rg" eshell-needs-pipe))
 
 (with-eval-after-load 'em-tramp
   (require 'tramp))
 
 (with-eval-after-load 'esh-mode
+  (setq eshell-output-filter-functions
+        (cons #'eshell-truncate-buffer
+              (remove #'eshell-postoutput-scroll-to-bottom
+                      eshell-output-filter-functions)))
   (define-key eshell-mode-map
               [remap beginning-of-defun] #'eshell-previous-prompt)
   (define-key eshell-mode-map
