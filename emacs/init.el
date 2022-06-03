@@ -337,6 +337,16 @@ which breaks `text-scale-mode'."
   (interactive)
   (set-transient-map window-traverse-map t))
 
+(defvar-keymap system-command-map
+  "c" #'meow-clipboard-save
+  "x" #'meow-clipboard-kill
+  "v" #'meow-clipboard-yank)
+
+(defun activate-system-command-map ()
+  "Activate system command keymap."
+  (interactive)
+  (set-transient-map system-command-map))
+
 (meow-motion-overwrite-define-key
  '("h" . meow-left)
  '("j" . meow-next)
@@ -419,6 +429,7 @@ which breaks `text-scale-mode'."
  '("q" . meow-quit)
  '("r" . undo-redo)
  '("R" . repeat)
+ '("s" . activate-system-command-map)
  '("S" . meow-swap-grab)
  '("t" . meow-till)
  '("u" . undo-only)
