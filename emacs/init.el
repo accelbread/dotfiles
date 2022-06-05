@@ -275,9 +275,7 @@
                          ('(t nil) "🔒")
                          ('(t t) "🔏")))
                 (:eval (when (buffer-narrowed-p) "🔎"))
-                "  "
-                (:propertize "%12b"
-                             face 'mode-line-buffer-id)
+                "  " (:propertize "%12b" face mode-line-buffer-id)
                 "  %p %l:%C"
                 (flymake-mode (" [" flymake-mode-line-error-counter
                                flymake-mode-line-warning-counter "]"))
