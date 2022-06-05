@@ -1,14 +1,10 @@
 ;;; init.el -*- lexical-binding: t; -*-
 
-;;; Fonts
+;;; Default fonts
 
 (set-face-attribute 'default nil :height 100 :family "DejaVu Sans Mono")
 (set-face-attribute 'fixed-pitch nil :family "DejaVu Sans Mono")
 (set-face-attribute 'variable-pitch nil :family "DejaVu Sans")
-
-(set-fontset-font t 'emoji "Twemoji")
-
-(setf (alist-get "Twemoji" face-font-rescale-alist) 0.9)
 
 
 ;;; Networking
@@ -215,18 +211,72 @@
   (hide-minor-mode 'buffer-face-mode))
 
 
-;;; Modeline
-
-(setq mode-line-compact 'long
-      mode-line-position-column-line-format '(" %l:%C"))
-
-(create-fontset-from-fontset-spec
- (font-xlfd-name (font-spec :registry "fontset-bwemoji")))
-
-(set-fontset-font "fontset-bwemoji" 'emoji "Noto Emoji")
+;;; Emoji
 
 (after-frame
- (set-face-attribute 'mode-line nil :fontset "fontset-bwemoji"))
+ (set-fontset-font t 'emoji "Noto Emoji")
+ (set-fontset-font t 'emoji "Noto Color Emoji" nil 'append))
+
+(create-fontset-from-fontset-spec
+  (font-xlfd-name (font-spec :registry "fontset-coloremoji")))
+
+(set-fontset-font "fontset-coloremoji" 'emoji "Noto Color Emoji")
+
+(defface color-emoji nil
+  "Face which uses the coloremoji fontset.")
+
+(after-frame
+ (set-face-attribute 'color-emoji nil :fontset "fontset-coloremoji"))
+
+(defvar-local color-emoji-remapping nil
+  "Holds cookie for color emoji face remapping entry.")
+
+(define-minor-mode color-emoji-mode
+  "Minor mode for color emoji."
+  :lighter ""
+  (when color-emoji-remapping
+    (face-remap-remove-relative color-emoji-remapping))
+  (setq color-emoji-remapping
+        (and color-emoji-mode
+            (face-remap-add-relative 'default 'color-emoji))))
+
+
+;;; Mode line
+
+(setq mode-line-compact 'long
+      eol-mnemonic-unix ""
+      eol-mnemonic-dos "[CRLF]"
+      eol-mnemonic-mac "[CR]"
+      eol-mnemonic-undecided "")
+
+(setq-default mode-line-format
+              `("%e "
+                mode-line-mule-info
+                (:eval (when (window-dedicated-p) "📌"))
+                (:eval (when (file-remote-p default-directory) "✈️"))
+                (:eval (cond ((meow-normal-mode-p) "😺")
+                             ((meow-insert-mode-p) "😸")
+                             ((meow-beacon-mode-p) "😻")
+                             ((meow-keypad-mode-p) "😾")
+                             ((meow-motion-mode-p) "😿")
+                             (t "🙀")))
+                (:eval (pcase (list buffer-read-only (buffer-modified-p))
+                         ('(nil nil) "✨")
+                         ('(nil t) "🖋️")
+                         ('(t nil) "🔒")
+                         ('(t t) "🔏")))
+                (:eval (when (buffer-narrowed-p) "🔎"))
+                "  "
+                (:propertize "%12b"
+                             face 'mode-line-buffer-id)
+                "  %p %l:%C"
+                (flymake-mode (" [" flymake-mode-line-error-counter
+                               flymake-mode-line-warning-counter "]"))
+                "  " mode-name mode-line-process
+                (:eval (when (eq major-mode 'term-mode)
+                         (term-line-ending-mode-line)))
+                minor-mode-alist
+                "  " mode-line-misc-info))
 
 
 ;;; Flash active mode line for bell
@@ -269,14 +319,6 @@ which breaks `text-scale-mode'."
             '((name . ignore-setting-face)))
 
 (global-page-break-lines-mode)
-
-
-;;; Lock windows to buffer
-
-(define-minor-mode pin-buffer-mode
-  "Prevent buffer's current window from switching buffers."
-  :lighter " 📌"
-  (set-window-dedicated-p (selected-window) pin-buffer-mode))
 
 
 ;;; Inline annotations
@@ -444,6 +486,13 @@ which breaks `text-scale-mode'."
  '("<escape>" . ignore))
 
 (meow-global-mode)
+
+(dolist (m '(meow-normal-mode
+             meow-insert-mode
+             meow-beacon-mode
+             meow-keypad-mode
+             meow-motion-mode))
+  (hide-minor-mode m))
 
 
 ;;; Completion
@@ -788,17 +837,22 @@ which breaks `text-scale-mode'."
 
 (advice-add #'term-char-mode :before-while
             (lambda ()
+              "Set intended input mode to char and switch only in insert mode."
               (setq meow-term-char t)
               (term-update-mode-line)
-              (meow-insert-mode-p)))
+              (meow-insert-mode-p))
+            '((name . meow-term)))
 
 (advice-add #'term-line-mode :before
             (lambda ()
+              "Set intended input mode to line and switch."
               (setq meow-term-char nil)
-              (term-update-mode-line)))
+              (term-update-mode-line))
+            '((name . meow-term)))
 
 (add-hook 'term-mode-hook
           (lambda ()
+            "Ensure normal mode has line keybindings."
             (add-hook 'meow-normal-mode-hook
                       (lambda ()
                         (let ((meow-term-char-temp meow-term-char))
@@ -814,12 +868,55 @@ which breaks `text-scale-mode'."
 
 (advice-add #'term-update-mode-line :around
             (lambda (oldfun)
+              "Show intended term input mode in mode line."
               (if meow-term-char
                   (let ((real-map (current-local-map)))
                     (use-local-map term-raw-map)
                     (funcall oldfun)
                     (use-local-map real-map))
-                (funcall oldfun))))
+                (funcall oldfun)))
+            '((name . meow-term)))
+
+(defvar-local term-line-ending "\n"
+  "Line ending to use for sending to process in `term-mode'")
+
+(defun term-line-ending-sender (proc string)
+  "Function to send PROC input STRING and line ending."
+  (term-send-string proc (concat string term-line-ending)))
+
+(setq term-input-sender #'term-line-ending-sender)
+
+(with-eval-after-load 'term
+  (define-key term-raw-map ["RET"]
+              (lambda ()
+                "Send line ending to the buffer's current process."
+                (interactive)
+                (term-send-raw-string term-line-ending))))
+
+(defun term-line-ending-send-lf ()
+  "Send `\\n' as line termination."
+  (declare (modes term-mode))
+  (interactive)
+  (setq term-line-ending "\n"))
+
+(defun term-line-ending-send-cr ()
+  "Send `\\r' as line termination."
+  (declare (modes term-mode))
+  (interactive)
+  (setq term-line-ending "\r"))
+
+(defun term-line-ending-send-crlf ()
+  "Send `\\r\\n' as line termination."
+  (declare (modes term-mode))
+  (interactive)
+  (setq term-line-ending "\r\n"))
+
+(defun term-line-ending-mode-line ()
+  "Get mode line string for term line ending."
+  (pcase term-line-ending
+    ("\n" " LF")
+    ("\r" " CR")
+    ("\r\n" " CRLF")))
 
 
 ;;; Compilation
@@ -907,9 +1004,7 @@ which breaks `text-scale-mode'."
 
 ;;; Flymake
 
-(setq flymake-mode-line-format '(" " flymake-mode-line-counters)
-      flymake-mode-line-counter-format '("[" flymake-mode-line-error-counter
-                                         flymake-mode-line-warning-counter "]"))
+(setq flymake-mode-line-format nil)
 
 
 ;;; Info
@@ -1049,16 +1144,23 @@ which breaks `text-scale-mode'."
 
 ;;; Commands
 
-(defun save-kill-current-buffer ()
-  "Save and kill current buffer."
+(defun pin-buffer ()
+  "Toggle whether current window is dedicated to its buffer."
   (interactive)
-  (save-buffer)
-  (kill-current-buffer))
+  (set-window-dedicated-p (selected-window) (not (window-dedicated-p))))
 
-(defun serial-115200 ()
-  "Serial console with 115200 baud rate."
-  (interactive)
-  (serial-term (serial-read-name) 115200))
+(defun open-serial (device)
+  "Run `serial-term' with reasonable defaults."
+  (interactive
+   (list (read-file-name
+          "Serial port: " "/dev/" "" t nil
+          (lambda (file)
+            (let* ((attr (file-attributes file 'string))
+                   (type (string-to-char (file-attribute-modes attr)))
+                   (group (file-attribute-group-id attr)))
+              (and (= type ?c)
+                   (string= group "dialout")))))))
+  (serial-term device nil t))
 
 
 ;;; Local configuration
