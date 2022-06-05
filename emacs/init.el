@@ -359,11 +359,19 @@ which breaks `text-scale-mode'."
 (require 'meow)
 
 (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty
+      meow-cursor-type-motion meow-cursor-type-insert
       meow-expand-hint-counts '((word . 10)
                                 (line . 0)
                                 (block . 0)
                                 (find . 10)
                                 (till . 10)))
+
+(dolist (m '(meow-normal-mode
+             meow-insert-mode
+             meow-beacon-mode
+             meow-keypad-mode
+             meow-motion-mode))
+  (hide-minor-mode m))
 
 (defun meow-toggle-normal ()
   "Switch between normal and motion modes."
@@ -372,12 +380,26 @@ which breaks `text-scale-mode'."
       (meow-motion-mode)
     (meow-normal-mode)))
 
-(defun meow-kill-or-delete ()
+(defun meow-delete/kill ()
   "Kill if region active, else delete."
   (interactive)
   (if (use-region-p)
       (meow-kill)
     (meow-delete)))
+
+(defun meow-backspace/clipboard-kill ()
+  "Kill to clipboard if region active, else backwards delete."
+  (interactive)
+  (if (use-region-p)
+      (meow-clipboard-kill)
+    (meow-backspace)))
+
+(defun meow-undo-only ()
+  "Cancel current selection then call `undo-only'."
+  (interactive)
+  (when (region-active-p)
+    (meow--cancel-selection))
+  (undo-only))
 
 (defvar-keymap window-traverse-map
   "h" #'windmove-left
@@ -396,23 +418,14 @@ which breaks `text-scale-mode'."
   "x" #'meow-clipboard-kill
   "v" #'meow-clipboard-yank)
 
-(defun activate-system-command-map ()
-  "Activate system command keymap."
-  (interactive)
-  (set-transient-map system-command-map))
-
 (meow-motion-overwrite-define-key
- '("h" . meow-left)
  '("j" . meow-next)
  '("k" . meow-prev)
- '("l" . meow-right)
  '("<escape>" . ignore))
 
 (meow-leader-define-key
- '("H" . "H-h")
  '("j" . "H-j")
  '("k" . "H-k")
- '("l" . "H-l")
  '("1" . meow-digit-argument)
  '("2" . meow-digit-argument)
  '("3" . meow-digit-argument)
@@ -444,8 +457,8 @@ which breaks `text-scale-mode'."
  '("-" . negative-argument)
  '(";" . meow-reverse)
  '(":" . execute-extended-command)
- '("." . meow-inner-of-thing)
- '("," . meow-bounds-of-thing)
+ '("." . meow-bounds-of-thing)
+ '("," . meow-inner-of-thing)
  '("<" . meow-beginning-of-thing)
  '(">" . meow-end-of-thing)
  '("[" . beginning-of-defun)
@@ -456,9 +469,9 @@ which breaks `text-scale-mode'."
  '("b" . meow-back-word)
  '("B" . meow-back-symbol)
  '("c" . meow-change)
- '("C" . query-replace-regexp)
- '("d" . meow-kill-or-delete)
- '("D" . meow-backward-delete)
+ '("C" . meow-replace)
+ '("d" . meow-delete/kill)
+ '("D" . meow-backspace/clipboard-kill)
  '("e" . meow-next-word)
  '("E" . meow-next-symbol)
  '("f" . meow-find)
@@ -475,36 +488,47 @@ which breaks `text-scale-mode'."
  '("l" . meow-right)
  '("L" . meow-right-expand)
  '("m" . meow-join)
- '("n" . meow-search)
  '("o" . meow-block)
  '("O" . meow-to-block)
  '("p" . meow-yank)
- '("P" . meow-replace)
+ '("P" . meow-clipboard-yank)
  '("q" . meow-quit)
- '("r" . undo-redo)
- '("R" . repeat)
- '("s" . activate-system-command-map)
- '("S" . meow-swap-grab)
+ '("r" . query-replace-regexp)
+ '("R" . replace-regexp)
+ '("s" . meow-swap-grab)
+ '("S" . meow-sync-grab)
  '("t" . meow-till)
- '("u" . undo-only)
+ '("u" . meow-undo-only)
+ '("U" . undo-redo)
  '("v" . meow-visit)
+ '("V" . meow-search)
  '("w" . meow-mark-word)
  '("W" . meow-mark-symbol)
  '("x" . meow-line)
  '("X" . meow-goto-line)
  '("y" . meow-save)
- '("Y" . meow-sync-grab)
+ '("Y" . meow-clipboard-save)
  '("z" . meow-pop-selection)
  '("<escape>" . ignore))
 
-(meow-global-mode)
+(setq meow-char-thing-table '((?\( . round) (?\) . round)
+                              (?\[ . square) (?\] . square)
+                              (?\{ . curly) (?\} . curly)
+                              (?x . line)
+                              (?f . defun)
+                              (?\" . string)
+                              (?e . symbol)
+                              (?w . window)
+                              (?b . buffer)
+                              (?p . paragraph)
+                              (?. . sentence)))
 
-(dolist (m '(meow-normal-mode
-             meow-insert-mode
-             meow-beacon-mode
-             meow-keypad-mode
-             meow-motion-mode))
-  (hide-minor-mode m))
+(setq meow-thing-selection-directions '((inner . backward)
+                                        (bounds . forward)
+                                        (beginning . backward)
+                                        (end . forward)))
+
+(meow-global-mode)
 
 
 ;;; Completion
