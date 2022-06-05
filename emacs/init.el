@@ -125,7 +125,7 @@
 ;;; Prevent misc file creation
 
 (setq auto-save-file-name-transforms
-      `((".*" ,(file-name-concat user-emacs-directory "auto-save") t))
+      `((".*" ,(file-name-concat user-emacs-directory "auto-save/") t))
       make-backup-files nil
       create-lockfiles nil
       custom-file null-device)
