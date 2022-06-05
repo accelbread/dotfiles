@@ -352,7 +352,12 @@ which breaks `text-scale-mode'."
 
 (require 'meow)
 
-(setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
+(setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty
+      meow-expand-hint-counts '((word . 10)
+                                (line . 0)
+                                (block . 0)
+                                (find . 10)
+                                (till . 10)))
 
 (defun meow-toggle-normal ()
   "Switch between normal and motion modes."
