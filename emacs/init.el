@@ -93,8 +93,8 @@
 (defmacro after-frame (&rest args)
   "Run `args' now if not daemon and after first frame if daemon."
   (if (daemonp)
-       `(add-hook 'after-frame-hook (lambda () ,@args))
-     `(progn ,@args)))
+      `(add-hook 'after-frame-hook (lambda () ,@args))
+    `(progn ,@args)))
 
 (defun load-face (face)
   "Recursively define face so theme attributes can be queried."
@@ -227,7 +227,7 @@
  (set-fontset-font t 'emoji "Noto Color Emoji" nil 'append))
 
 (create-fontset-from-fontset-spec
-  (font-xlfd-name (font-spec :registry "fontset-coloremoji")))
+ (font-xlfd-name (font-spec :registry "fontset-coloremoji")))
 
 (set-fontset-font "fontset-coloremoji" 'emoji "Noto Color Emoji")
 
@@ -247,7 +247,7 @@
     (face-remap-remove-relative color-emoji-remapping))
   (setq color-emoji-remapping
         (and color-emoji-mode
-            (face-remap-add-relative 'default 'color-emoji))))
+             (face-remap-add-relative 'default 'color-emoji))))
 
 
 ;;; Mode line
@@ -900,7 +900,7 @@ which breaks `text-scale-mode'."
             (add-hook 'meow-insert-mode-hook
                       (lambda ()
                         (when meow-term-char
-                            (term-char-mode)))
+                          (term-char-mode)))
                       nil t)))
 
 (advice-add #'term-update-mode-line :around
