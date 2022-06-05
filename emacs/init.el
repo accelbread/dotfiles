@@ -96,6 +96,14 @@
        `(add-hook 'after-frame-hook (lambda () ,@args))
      `(progn ,@args)))
 
+(defun load-face (face)
+  "Recursively define face so theme attributes can be queried."
+  (unless (facep face)
+    (eval `(defface ,face nil nil))
+    (if-let* ((inherit (face-attribute face :inherit))
+              (listp inherit))
+        (mapc #'load-face inherit))))
+
 
 ;;; Hide welcome messages
 
@@ -616,9 +624,7 @@ which breaks `text-scale-mode'."
                      ("bd" eshell-ls-special)     ; Block device
                      ("cd" eshell-ls-special)     ; Char device
                      ("so" eshell-ls-special)))   ; Socket
-      ;; Define face if eshell not loaded yet in order to grab color from theme.
-      (unless (facep face)
-        (eval `(defface ,face nil nil)))
+      (load-face face)
       (let* ((face-color (face-attribute face :foreground nil t))
              (r (substring face-color 1 3))
              (g (substring face-color 3 5))
