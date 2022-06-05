@@ -29,7 +29,7 @@
 
 (setq package-selected-packages
       '( meow gcmh page-break-lines rainbow-delimiters hl-todo flyspell-correct
-         corfu corfu-doc cape kind-icon selectrum orderless marginalia
+         corfu corfu-doc cape kind-icon vertico orderless marginalia
          fish-completion vterm esh-help eglot yasnippet tree-sitter
          tree-sitter-langs magit magit-todos forge code-review virtual-comment
          which-key rg markdown-mode rust-mode cargo zig-mode cmake-mode
@@ -451,8 +451,9 @@ which breaks `text-scale-mode'."
 (require 'kind-icon)
 
 (setq read-extended-command-predicate #'command-completion-default-include-p
-      completion-styles '(orderless)
+      completion-styles '(orderless basic)
       completion-category-defaults nil
+      orderless-component-separator #'orderless-escapable-split-on-space
       completion-at-point-functions (list #'cape-file
                                           (cape-super-capf #'cape-dabbrev
                                                            #'cape-ispell))
@@ -464,13 +465,12 @@ which breaks `text-scale-mode'."
       kind-icon-blend-background nil
       kind-icon-default-style (plist-put kind-icon-default-style ':height 0.75))
 
-(selectrum-mode)
+(vertico-mode)
 (marginalia-mode)
 (global-corfu-mode)
 (corfu-doc-mode)
 
 (define-key corfu-map ["RET"] nil)
-
 (define-key corfu-map ["M-p"] #'corfu-doc-scroll-down)
 (define-key corfu-map ["M-n"] #'corfu-doc-scroll-up)
 
