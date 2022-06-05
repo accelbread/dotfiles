@@ -665,6 +665,9 @@ which breaks `text-scale-mode'."
 (with-eval-after-load 'esh-proc
   (push "rg" eshell-needs-pipe))
 
+(with-eval-after-load 'em-term
+  (push "watch" eshell-visual-commands))
+
 (with-eval-after-load 'em-tramp
   (require 'tramp))
 
