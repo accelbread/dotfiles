@@ -110,7 +110,8 @@
       confirm-kill-processes nil
       kill-buffer-query-functions nil
       auth-source-save-behavior nil
-      enable-local-variables :safe)
+      enable-local-variables :safe
+      disabled-command-function nil)
 
 (global-set-key ["C-x k"] 'kill-current-buffer)
 
