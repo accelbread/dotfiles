@@ -261,15 +261,10 @@
 
 ;;; Mode line
 
-(setq mode-line-compact 'long
-      eol-mnemonic-unix ""
-      eol-mnemonic-dos "[CRLF]"
-      eol-mnemonic-mac "[CR]"
-      eol-mnemonic-undecided "")
+(setq mode-line-compact 'long)
 
 (setq-default mode-line-format
               `("%e "
-                mode-line-mule-info
                 (:eval (when (window-dedicated-p) "📌"))
                 (:eval (when (file-remote-p default-directory) "✈️"))
                 (:eval (cond ((meow-normal-mode-p) "😺")
@@ -284,10 +279,23 @@
                          ('(t nil) "🔒")
                          ('(t t) "🔏")))
                 (:eval (when (buffer-narrowed-p) "🔎"))
-                "  " (:propertize "%12b" face mode-line-buffer-id)
-                "  %p %l:%C"
-                (flymake-mode (" [" flymake-mode-line-error-counter
-                               flymake-mode-line-warning-counter "]"))
+                "  " (:propertize "%12b" face mode-line-buffer-id) "  "
+                (:propertize
+                 (:eval (let ((coding (coding-system-base
+                                       buffer-file-coding-system))
+                              (eol (coding-system-eol-type
+                                    buffer-file-coding-system)))
+                          (pcase (list (eq coding 'utf-8) (eq eol 0))
+                            ('(t t) nil)
+                            ('(t nil) (pcase eol (1 "dos  ") (2 "mac  ")))
+                            ('(nil t) `(,(symbol-name coding) "  "))
+                            ('(nil nil) `(,(symbol-name
+                                            buffer-file-coding-system)
+                                          "  ")))))
+                 face italic)
+                "%p %l:%C"
+                (flymake-mode (" " flymake-mode-line-error-counter
+                               flymake-mode-line-warning-counter))
                 "  " mode-name mode-line-process
                 (:eval (when (eq major-mode 'term-mode)
                          (term-line-ending-mode-line)))
