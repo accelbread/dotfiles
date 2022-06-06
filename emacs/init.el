@@ -58,6 +58,10 @@
   "Add NEWELT to the list stored in the default value of VAR."
   `(setq-default ,var (cons ,newelt (default-value ,var))))
 
+(defun command-var (var)
+  "Return lambda which calls command in VAR."
+  (lambda () (interactive) (call-interactively (symbol-value var))))
+
 (defun hide-minor-mode (mode)
   "Remove display for minor mode MODE from the mode line."
   (setf (alist-get mode minor-mode-alist) '(nil)))
@@ -418,9 +422,15 @@ which breaks `text-scale-mode'."
   "x" #'meow-clipboard-kill
   "v" #'meow-clipboard-yank)
 
+(defvar-local meow-motion-next-function #'meow-next
+  "Function to use for next in motion mode.")
+
+(defvar-local meow-motion-prev-function #'meow-prev
+  "Function to use for prev in motion mode.")
+
 (meow-motion-overwrite-define-key
- '("j" . meow-next)
- '("k" . meow-prev)
+ `("j" . ,(command-var 'meow-motion-next-function))
+ `("k" . ,(command-var 'meow-motion-prev-function))
  '("<escape>" . ignore))
 
 (meow-leader-define-key
@@ -984,6 +994,11 @@ which breaks `text-scale-mode'."
   (remove-hook 'server-switch-hook #'magit-commit-diff)
   (magit-todos-mode))
 
+(add-hook 'magit-mode-hook
+          (lambda ()
+            (setq meow-motion-next-function #'magit-section-forward)
+            (setq meow-motion-prev-function #'magit-section-backward)))
+
 
 ;;; Ediff
 
@@ -1060,6 +1075,11 @@ which breaks `text-scale-mode'."
 (setq Info-additional-directory-list load-path)
 
 (add-hook 'Info-mode-hook #'variable-pitch-mode)
+
+(add-hook 'Info-mode-hook
+          (lambda ()
+            (setq meow-motion-next-function #'Info-scroll-up)
+            (setq meow-motion-prev-function #'Info-scroll-down)))
 
 
 ;;; Man
