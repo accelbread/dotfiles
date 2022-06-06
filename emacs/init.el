@@ -621,25 +621,6 @@ which breaks `text-scale-mode'."
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 
-;;; LSP
-
-(yas-global-mode)
-
-(hide-minor-mode 'yas-minor-mode)
-
-(advice-add #'eglot-completion-at-point
-            :before-until #'inside-program-text-p)
-
-
-;;; Treesitter
-
-(global-tree-sitter-mode)
-
-(hide-minor-mode 'tree-sitter-mode)
-
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-
-
 ;;; Shell
 
 (setq comint-terminfo-terminal "dumb-emacs-ansi"
@@ -980,6 +961,32 @@ which breaks `text-scale-mode'."
   (ansi-color-apply-on-region compilation-filter-start (point)))
 
 (add-hook 'compilation-filter-hook #'compilation-ansi-color)
+
+
+;;; Eglot
+
+(advice-add #'eglot-completion-at-point
+            :before-until #'inside-program-text-p)
+
+
+;;; Yasnippet
+
+(yas-global-mode)
+
+(hide-minor-mode 'yas-minor-mode)
+
+(setq yas-minor-mode-map (make-sparse-keymap))
+
+(add-hook 'yas-keymap-disable-hook (lambda () completion-in-region-mode))
+
+
+;;; Treesitter
+
+(global-tree-sitter-mode)
+
+(hide-minor-mode 'tree-sitter-mode)
+
+(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
 
 ;;; Formatting
