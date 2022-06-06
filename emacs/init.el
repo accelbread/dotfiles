@@ -553,7 +553,9 @@ which breaks `text-scale-mode'."
 (vertico-mode)
 (marginalia-mode)
 (global-corfu-mode)
-(corfu-doc-mode)
+
+(after-frame
+ (corfu-doc-mode))
 
 (define-key corfu-map ["RET"] nil)
 (define-key corfu-map ["M-p"] #'corfu-doc-scroll-down)
@@ -1044,6 +1046,15 @@ which breaks `text-scale-mode'."
 (setq flymake-mode-line-format nil)
 
 
+;;; Help
+
+(advice-add 'help-buffer :override
+            (lambda ()
+              "Return \"*Help*\". Ignores `help-xref-following'."
+              (get-buffer-create "*Help*"))
+            '((name . help-xref-dont-reuse-buffer)))
+
+
 ;;; Info
 
 (setq Info-additional-directory-list load-path)
@@ -1062,6 +1073,15 @@ which breaks `text-scale-mode'."
 
 (setq elisp-flymake-byte-compile-load-path
       (append elisp-flymake-byte-compile-load-path load-path))
+
+(advice-add 'elisp--company-doc-buffer :around
+            (lambda (orig-fun &rest args)
+              "Use different help buffer for completion docs."
+              (cl-letf (((symbol-function #'help-buffer)
+                         (lambda ()
+                           (get-buffer-create " *help-company-doc-buffer*"))))
+                (apply orig-fun args)))
+            '((name . custom-help-buffer)))
 
 
 ;;; Org
