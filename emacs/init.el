@@ -28,9 +28,9 @@
          corfu corfu-doc cape kind-icon vertico orderless marginalia
          fish-completion vterm esh-help eglot yasnippet tree-sitter
          tree-sitter-langs magit magit-todos forge code-review virtual-comment
-         which-key rg markdown-mode rust-mode cargo zig-mode cmake-mode
-         toml-mode yaml-mode git-modes scad-mode rainbow-mode auto-minor-mode
-         openwith pdf-tools org-present))
+         which-key rg markdown-mode rust-mode cargo zig-mode clang-format
+         cmake-mode toml-mode yaml-mode git-modes scad-mode rainbow-mode
+         auto-minor-mode openwith pdf-tools org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -61,6 +61,10 @@
 (defun command-var (var)
   "Return lambda which calls command in VAR."
   (lambda () (interactive) (call-interactively (symbol-value var))))
+
+(defmacro completion-pred (&rest body)
+  "Return completion-predicate which runs BODY."
+  `(lambda (sym buffer) (with-current-buffer buffer ,@body)))
 
 (defun hide-minor-mode (mode)
   "Remove display for minor mode MODE from the mode line."
@@ -978,6 +982,50 @@ which breaks `text-scale-mode'."
 (add-hook 'compilation-filter-hook #'compilation-ansi-color)
 
 
+;;; Formatting
+
+(defvar-local format-region-function #'indent-region
+  "Function to use for formatting region.")
+
+(defvar-local format-buffer-function nil
+  "Function to use for formatting buffer.")
+
+(defun format-region ()
+  (interactive)
+  (if (region-active-p)
+      (if format-region-function
+          (funcall format-region-function
+                   (region-beginning) (region-end))
+        (user-error "Region formatting not supported!"))
+    (format-buffer)))
+
+(defun format-buffer ()
+  (interactive)
+  (cond (format-buffer-function
+         (funcall format-buffer-function))
+        (format-region-function
+         (funcall format-region-function (point-min) (point-max)))))
+
+(dolist (sym '(format-region format-buffer))
+  (put sym 'completion-predicate (completion-pred (not buffer-read-only))))
+
+(define-minor-mode format-on-save-mode
+  "Minor mode for automatically formatting before saving."
+  :lighter " 🧹"
+  (if format-on-save-mode
+      (add-hook 'before-save-hook #'format-buffer nil t)
+    (remove-hook 'before-save-hook #'format-buffer t)))
+
+(defun formatter-hook-fn (format-on-save
+                          region-function
+                          &optional buffer-function)
+  "Create hook function to set formatter."
+  (lambda ()
+    (setq format-region-function region-function)
+    (setq format-buffer-function buffer-function)
+    (when format-on-save (format-on-save-mode))))
+
+
 ;;; Transient
 
 (setq transient-default-level 7)
@@ -1102,6 +1150,8 @@ which breaks `text-scale-mode'."
                 (apply orig-fun args)))
             '((name . custom-help-buffer)))
 
+(add-hook 'emacs-lisp-mode-hook #'format-on-save-mode)
+
 
 ;;; Org
 
@@ -1139,7 +1189,7 @@ which breaks `text-scale-mode'."
 
 ;;; Rust
 
-(setq rust-format-on-save t)
+(setq rust-format-on-save nil)
 
 (with-eval-after-load 'eglot
   (setf (alist-get 'rust-mode eglot-server-programs) '("rust-analyzer"))
@@ -1147,23 +1197,47 @@ which breaks `text-scale-mode'."
                 eglot-workspace-configuration))
 
 (add-hook 'rust-mode-hook #'eglot-ensure)
+(add-hook 'rust-mode-hook (formatter-hook-fn
+                           t #'indent-region #'rust-format-buffer))
 (add-hook 'rust-mode-hook #'cargo-minor-mode)
+
 (add-hook 'toml-mode-hook #'cargo-minor-mode)
 
 (with-eval-after-load 'cargo
   (hide-minor-mode 'cargo-minor-mode))
 
+(dolist (sym '(rust-enable-format-on-save rust-disable-format-on-save))
+  (put sym 'completion-predicate #'ignore))
+
 
 ;;; C/C++
 
+(defvar-local clang-format-enabled nil
+  "Whether clang-format commands should be available in buffer.")
+
+(defun c-formatter-configure ()
+  (when (locate-dominating-file default-directory ".clang-format")
+    (setq clang-format-enabled t
+          format-region-function #'clang-format-region
+          format-buffer-function #'clang-format-buffer)
+    (format-on-save-mode)))
+
+(dolist (sym '(clang-format-region clang-format-buffer))
+  (put sym 'completion-predicate (completion-pred clang-format-enabled)))
+
+(put 'clang-format 'completion-predicate #'ignore)
+
 (with-eval-after-load 'cc-mode
-  (setf (alist-get 'other c-default-style) "stroustrup")
-  (add-hook 'c-mode-hook
-            (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0]))))
+  (setf (alist-get 'other c-default-style) "stroustrup"))
+
+(add-hook 'c-mode-hook
+          (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0])))
 
 (add-hook 'c-mode-hook #'eglot-ensure)
+(add-hook 'c-mode-hook #'c-formatter-configure)
 
 (add-hook 'c++-mode-hook #'eglot-ensure)
+(add-hook 'c++-mode-hook #'c-formatter-configure)
 
 (tree-sitter-hl-add-patterns 'c
   [(system_lib_string) @constructor
@@ -1183,7 +1257,13 @@ which breaks `text-scale-mode'."
 
 ;;; Zig
 
+(setq zig-format-on-save nil)
+
 (add-hook 'zig-mode-hook #'eglot-ensure)
+(add-hook 'zig-mode-hook (formatter-hook-fn
+                          t #'indent-region #'zig-format-buffer))
+
+(put 'zig-toggle-format-on-save 'completion-predicate #'ignore)
 
 
 ;;; Themes
