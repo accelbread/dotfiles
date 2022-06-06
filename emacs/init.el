@@ -968,16 +968,15 @@ which breaks `text-scale-mode'."
 (advice-add #'eglot-completion-at-point
             :before-until #'inside-program-text-p)
 
-
-;;; Yasnippet
-
-(yas-global-mode)
-
-(hide-minor-mode 'yas-minor-mode)
-
-(setq yas-minor-mode-map (make-sparse-keymap))
+(with-eval-after-load 'yasnippet
+  (hide-minor-mode 'yas-minor-mode)
+  (setq yas-minor-mode-map (make-sparse-keymap)))
 
 (add-hook 'yas-keymap-disable-hook (lambda () completion-in-region-mode))
+
+(defun setup-eglot ()
+  (yas-minor-mode)
+  (eglot-ensure))
 
 
 ;;; Treesitter
@@ -1203,7 +1202,7 @@ which breaks `text-scale-mode'."
   (push-default '(rust-analyzer (checkOnSave (command . "clippy")))
                 eglot-workspace-configuration))
 
-(add-hook 'rust-mode-hook #'eglot-ensure)
+(add-hook 'rust-mode-hook #'setup-eglot)
 (add-hook 'rust-mode-hook (formatter-hook-fn
                            t #'indent-region #'rust-format-buffer))
 (add-hook 'rust-mode-hook #'cargo-minor-mode)
@@ -1240,10 +1239,10 @@ which breaks `text-scale-mode'."
 (add-hook 'c-mode-hook
           (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0])))
 
-(add-hook 'c-mode-hook #'eglot-ensure)
+(add-hook 'c-mode-hook #'setup-eglot)
 (add-hook 'c-mode-hook #'c-formatter-configure)
 
-(add-hook 'c++-mode-hook #'eglot-ensure)
+(add-hook 'c++-mode-hook #'setup-eglot)
 (add-hook 'c++-mode-hook #'c-formatter-configure)
 
 (tree-sitter-hl-add-patterns 'c
@@ -1253,7 +1252,7 @@ which breaks `text-scale-mode'."
 
 ;;; Python
 
-(add-hook 'python-mode-hook #'eglot-ensure)
+(add-hook 'python-mode-hook #'setup-eglot)
 
 (defun ipython ()
   "Run ipython in vterm."
@@ -1266,7 +1265,7 @@ which breaks `text-scale-mode'."
 
 (setq zig-format-on-save nil)
 
-(add-hook 'zig-mode-hook #'eglot-ensure)
+(add-hook 'zig-mode-hook #'setup-eglot)
 (add-hook 'zig-mode-hook (formatter-hook-fn
                           t #'indent-region #'zig-format-buffer))
 
