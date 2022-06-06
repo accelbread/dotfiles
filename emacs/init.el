@@ -200,6 +200,7 @@
       whitespace-global-modes '(prog-mode text-mode conf-mode)
       resize-mini-windows t
       enable-recursive-minibuffers t
+      suggest-key-bindings nil
       mouse-drag-and-drop-region t
       mouse-yank-at-point t)
 
@@ -1026,8 +1027,6 @@ which breaks `text-scale-mode'."
 ;;; Dired
 
 (setq wdired-allow-to-change-permissions t)
-
-(put #'dired-find-alternate-file 'disabled nil)
 
 
 ;;; Proced
