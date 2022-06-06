@@ -30,7 +30,7 @@
          tree-sitter-langs magit magit-todos forge code-review virtual-comment
          which-key rg markdown-mode rust-mode cargo zig-mode clang-format
          cmake-mode toml-mode yaml-mode git-modes scad-mode rainbow-mode
-         auto-minor-mode openwith pdf-tools org-present))
+         auto-minor-mode openwith pdf-tools org-present rmsbolt))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
