@@ -24,13 +24,13 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '( meow gcmh page-break-lines rainbow-delimiters hl-todo flyspell-correct
-         corfu corfu-doc cape kind-icon vertico orderless marginalia
-         fish-completion vterm esh-help eglot yasnippet tree-sitter
-         tree-sitter-langs magit magit-todos forge code-review virtual-comment
-         which-key rg markdown-mode rust-mode cargo zig-mode clang-format
-         cmake-mode toml-mode yaml-mode git-modes scad-mode rainbow-mode
-         auto-minor-mode openwith pdf-tools org-present rmsbolt))
+      '( meow gcmh svg-lib page-break-lines rainbow-delimiters flyspell-correct
+         corfu corfu-doc cape kind-icon vertico orderless marginalia consult
+         which-key esh-help vterm fish-completion tree-sitter tree-sitter-langs
+         magit magit-todos hl-todo forge code-review virtual-comment rg rmsbolt
+         eglot yasnippet markdown-mode clang-format cmake-mode rust-mode cargo
+         zig-mode scad-mode toml-mode yaml-mode git-modes pdf-tools rainbow-mode
+         auto-minor-mode openwith org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -66,9 +66,9 @@
   "Return completion-predicate which runs BODY."
   `(lambda (sym buffer) (with-current-buffer buffer ,@body)))
 
-(defun hide-minor-mode (mode)
-  "Remove display for minor mode MODE from the mode line."
-  (setf (alist-get mode minor-mode-alist) '(nil)))
+(defun hide-minor-mode (mode &optional value)
+  "Remove display for minor mode MODE from the mode line or set to VALUE."
+  (setf (alist-get mode minor-mode-alist) (list value)))
 
 (defun set-header-fixed-pitch ()
   "Set the header-line face to use fixed-pitch in the current buffer."
@@ -111,6 +111,19 @@
     (if-let* ((inherit (face-attribute face :inherit))
               (listp inherit))
         (mapc #'load-face inherit))))
+
+(defmacro window-font-dim-override (face &rest body)
+  "Override default face for `window-font-width' and `window-font-height'."
+  (declare (indent 1))
+  `(cl-letf* ((orig-window-font-width (symbol-function 'window-font-width))
+              (orig-window-font-height (symbol-function 'window-font-height))
+              ((symbol-function 'window-font-width)
+               (lambda ()
+                 (funcall orig-window-font-width nil ,face)))
+              ((symbol-function 'window-font-height)
+               (lambda ()
+                 (funcall orig-window-font-height nil ,face))))
+     ,@body))
 
 
 ;;; Hide welcome messages
@@ -197,6 +210,8 @@
 
 (add-hook 'text-mode-hook #'auto-fill-mode)
 
+(hide-minor-mode 'auto-fill-function " ↩️")
+
 
 ;;; Misc UI
 
@@ -266,7 +281,6 @@
 (setq-default mode-line-format
               `("%e "
                 (:eval (when (window-dedicated-p) "📌"))
-                (:eval (when (file-remote-p default-directory) "✈️"))
                 (:eval (cond ((meow-normal-mode-p) "😺")
                              ((meow-insert-mode-p) "😸")
                              ((meow-beacon-mode-p) "😻")
@@ -278,25 +292,33 @@
                          ('(nil t) "🖋️")
                          ('(t nil) "🔒")
                          ('(t t) "🔏")))
+                (:eval (when (file-remote-p default-directory) "✈️"))
                 (:eval (when (buffer-narrowed-p) "🔎"))
-                "  " (:propertize "%12b" face mode-line-buffer-id) "  "
+                (:eval (propertize
+                        " %l " 'display
+                        (window-font-dim-override 'mode-line
+                          (svg-lib-progress-bar
+                           (/ (float (point)) (point-max))
+                           nil :width 3 :height 0.48 :stroke 1 :padding 2
+                           :radius 0 :margin 1))))
+                " " (:propertize "%12b" face mode-line-buffer-id) "  "
                 (:propertize
-                 (:eval (let ((coding (coding-system-base
+                 (:eval (unless (eq buffer-file-coding-system 'utf-8-unix)
+                          (let ((base (coding-system-base
                                        buffer-file-coding-system))
-                              (eol (coding-system-eol-type
-                                    buffer-file-coding-system)))
-                          (pcase (list (eq coding 'utf-8) (eq eol 0))
-                            ('(t t) nil)
-                            ('(t nil) (pcase eol (1 "dos  ") (2 "mac  ")))
-                            ('(nil t) `(,(symbol-name coding) "  "))
-                            ('(nil nil) `(,(symbol-name
-                                            buffer-file-coding-system)
-                                          "  ")))))
+                                (eol (coding-system-eol-type
+                                      buffer-file-coding-system)))
+                            (if (or (eq base 'utf-8)
+                                    (eq base 'undecided))
+                                (pcase eol (1 "dos  ") (2 "mac  "))
+                              `(,(symbol-name
+                                  (if (eq eol 0) base
+                                    buffer-file-coding-system))
+                                "  ")))))
                  face italic)
-                "%p %l:%C"
-                (flymake-mode (" " flymake-mode-line-error-counter
-                               flymake-mode-line-warning-counter))
-                "  " mode-name mode-line-process
+                (flymake-mode (flymake-mode-line-error-counter
+                               flymake-mode-line-warning-counter "  "))
+                mode-name mode-line-process
                 (:eval (when (eq major-mode 'term-mode)
                          (term-line-ending-mode-line)))
                 minor-mode-alist
@@ -351,7 +373,7 @@ which breaks `text-scale-mode'."
       (file-name-concat user-emacs-directory "evc"))
 
 (with-eval-after-load 'virtual-comment
-  (setf (alist-get 'virtual-comment-mode minor-mode-alist) '(" 📝")))
+  (hide-minor-mode 'virtual-comment-mode " 📝"))
 
 
 ;;; Performance
@@ -561,6 +583,7 @@ which breaks `text-scale-mode'."
 (setq read-extended-command-predicate #'command-completion-default-include-p
       completion-styles '(orderless basic)
       completion-category-defaults nil
+      completion-in-region-function #'consult-completion-in-region
       orderless-component-separator #'orderless-escapable-split-on-space
       completion-at-point-functions (list #'cape-file
                                           (cape-super-capf #'cape-dabbrev
@@ -584,7 +607,7 @@ which breaks `text-scale-mode'."
 (define-key corfu-map ["M-p"] #'corfu-doc-scroll-down)
 (define-key corfu-map ["M-n"] #'corfu-doc-scroll-up)
 
-(add-hook 'meow-normal-mode-hook #'corfu-quit)
+(add-hook 'meow-insert-exit-hook (lambda () (when corfu-mode (corfu-quit))))
 
 
 ;;; Spell checking
@@ -859,10 +882,10 @@ which breaks `text-scale-mode'."
 
 (add-hook 'vterm-mode-hook
           (lambda ()
-            (add-hook 'meow-normal-mode-hook
+            (add-hook 'meow-normal-enter-hook
                       (lambda () (use-local-map vterm-normal-mode-map))
                       nil t)
-            (add-hook 'meow-insert-mode-hook
+            (add-hook 'meow-insert-enter-hook
                       (lambda ()
                         (use-local-map vterm-mode-map)
                         (vterm-goto-char (point)))
@@ -896,14 +919,14 @@ which breaks `text-scale-mode'."
 (add-hook 'term-mode-hook
           (lambda ()
             "Ensure normal mode has line keybindings."
-            (add-hook 'meow-normal-mode-hook
+            (add-hook 'meow-normal-enter-hook
                       (lambda ()
                         (let ((meow-term-char-temp meow-term-char))
                           (term-line-mode)
                           (setq meow-term-char meow-term-char-temp)
                           (term-update-mode-line)))
                       nil t)
-            (add-hook 'meow-insert-mode-hook
+            (add-hook 'meow-insert-enter-hook
                       (lambda ()
                         (when meow-term-char
                           (term-char-mode)))
