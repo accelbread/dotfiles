@@ -204,6 +204,11 @@
 (pixel-scroll-precision-mode)
 
 
+;;; Default to utf-8
+
+(set-default-coding-systems 'utf-8)
+
+
 ;;; Formatting
 
 (setq-default fill-column 80
