@@ -175,6 +175,11 @@
 (setq select-enable-clipboard nil)
 
 
+;;; Save minibuffer history
+
+(savehist-mode)
+
+
 ;;; Increase undo history
 
 (setq undo-limit (* 4 1024 1024)
