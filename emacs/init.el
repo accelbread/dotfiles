@@ -496,7 +496,8 @@ which breaks `text-scale-mode'."
  '("?" . meow-cheatsheet)
  '("r" . rg-menu)
  '("n" . meow-toggle-normal)
- '("w" . window-traverse))
+ '("w" . window-traverse)
+ '("i" . buffer-stats))
 
 (meow-normal-define-key
  '("0" . meow-expand-0)
@@ -1351,6 +1352,30 @@ which breaks `text-scale-mode'."
   "Toggle whether current window is dedicated to its buffer."
   (interactive)
   (set-window-dedicated-p (selected-window) (not (window-dedicated-p))))
+
+(defun buffer-stats ()
+  "Message info about buffer/point/region size/position/etc."
+  (interactive)
+  (message
+   (concat "Point: %d, %d:%d\n"
+           "Buffer: %d, %d lines"
+           (when (region-active-p)
+             (let* ((region-lines (count-lines (region-beginning) (region-end)))
+                    (start-line (count-lines (point-min) (region-beginning)))
+                    (end-line (1- (+ region-lines start-line)))
+                    (start-col (save-excursion
+                                 (set-window-point nil (region-beginning))
+                                 (current-column)))
+                    (end-col (save-excursion
+                               (set-window-point nil (region-end))
+                               (current-column))))
+               (format "\nRegion: %d, %d:%d [%d:%d - %d:%d]"
+                       (- (region-end) (region-beginning))
+                       region-lines (- end-col start-col)
+                       start-line start-col
+                       end-line end-col))))
+   (point) (1+ (current-line)) (current-column)
+   (buffer-size) (count-lines (point-min) (point-max))))
 
 (defun open-serial (device)
   "Run `serial-term' with reasonable defaults."
