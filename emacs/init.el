@@ -310,7 +310,7 @@
                           (svg-lib-progress-bar
                            (/ (float (point)) (point-max))
                            nil :width 3 :height 0.48 :stroke 1 :padding 2
-                           :radius 0 :margin 1))))
+                           :radius 1 :margin 1))))
                 " " (:propertize "%12b" face mode-line-buffer-id) "  "
                 (:propertize
                  (:eval (unless (eq buffer-file-coding-system 'utf-8-unix)
