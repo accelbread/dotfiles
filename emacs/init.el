@@ -1173,7 +1173,8 @@ REGION-FUNCTION will be used for buffer formatting."
 
 ;;; Flymake
 
-(setq flymake-mode-line-format nil)
+(setq flymake-mode-line-format nil
+      flymake-suppress-zero-counters t)
 
 
 ;;; Help
