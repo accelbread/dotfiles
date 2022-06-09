@@ -1,4 +1,11 @@
-;;; init.el -*- lexical-binding: t; -*-
+;;; init.el --- emacs configuration file -*- lexical-binding: t; -*-
+
+;;; Commentary:
+
+;; Personal Emacs config file.
+
+;;; Code:
+
 
 ;;; Default fonts
 
@@ -59,12 +66,12 @@
   `(setq-default ,var (cons ,newelt (default-value ,var))))
 
 (defun command-var (var)
-  "Return lambda which calls command in VAR."
+  "Return lambda for calling command in VAR."
   (lambda () (interactive) (call-interactively (symbol-value var))))
 
 (defmacro completion-pred (&rest body)
-  "Return completion-predicate which runs BODY."
-  `(lambda (sym buffer) (with-current-buffer buffer ,@body)))
+  "Return completion-predicate with BODY in correct buffer."
+  `(lambda (_sym buffer) (with-current-buffer buffer ,@body)))
 
 (defun hide-minor-mode (mode &optional value)
   "Remove display for minor mode MODE from the mode line or set to VALUE."
@@ -80,10 +87,10 @@
                              font-lock-comment-face
                              font-lock-doc-face
                              font-lock-string-face)
-  "Faces corresponding to text in prog-mode buffers.")
+  "Faces corresponding to text in `prog-mode' buffers.")
 
-(defun inside-program-text-p (&rest args)
-  "Checks if point is in a comment, string, or doc."
+(defun inside-program-text-p (&rest _)
+  "Check if point is in a comment, string, or doc."
   (memq (car (ensure-list (get-text-property (1- (point)) 'face)))
         program-text-faces))
 
@@ -99,13 +106,13 @@
 (add-hook 'server-after-make-frame-hook #'run-after-frame-hook)
 
 (defmacro after-frame (&rest args)
-  "Run `args' now if not daemon and after first frame if daemon."
+  "Run ARGS now if not daemon and after first frame if daemon."
   (if (daemonp)
       `(add-hook 'after-frame-hook (lambda () ,@args))
     `(progn ,@args)))
 
 (defun load-face (face)
-  "Recursively define face so theme attributes can be queried."
+  "Recursively define FACE so its theme attributes can be queried."
   (unless (facep face)
     (eval `(defface ,face nil nil))
     (if-let* ((inherit (face-attribute face :inherit))
@@ -113,7 +120,7 @@
         (mapc #'load-face inherit))))
 
 (defmacro window-font-dim-override (face &rest body)
-  "Override default face for `window-font-width' and `window-font-height'."
+  "Execute BODY with FACE as default for height/width calculation."
   (declare (indent 1))
   `(cl-letf* ((orig-window-font-width (symbol-function 'window-font-width))
               (orig-window-font-height (symbol-function 'window-font-height))
@@ -266,7 +273,8 @@
 (set-fontset-font "fontset-coloremoji" 'emoji "Noto Color Emoji")
 
 (defface color-emoji nil
-  "Face which uses the coloremoji fontset.")
+  "Face which uses the coloremoji fontset."
+  :group 'custom)
 
 (after-frame
  (set-face-attribute 'color-emoji nil :fontset "fontset-coloremoji"))
@@ -311,7 +319,7 @@
                            (/ (float (point)) (point-max))
                            nil :width 3 :height 0.48 :stroke 1 :padding 2
                            :radius 1 :margin 1))))
-                " " (:propertize "%12b" face mode-line-buffer-id) "  "
+                " " (:propertize "%12b" face mode-line-buffer-id)
                 (:propertize
                  (:eval (unless (eq buffer-file-coding-system 'utf-8-unix)
                           (let ((base (coding-system-base
@@ -320,15 +328,15 @@
                                       buffer-file-coding-system)))
                             (if (or (eq base 'utf-8)
                                     (eq base 'undecided))
-                                (pcase eol (1 "dos  ") (2 "mac  "))
-                              `(,(symbol-name
-                                  (if (eq eol 0) base
-                                    buffer-file-coding-system))
-                                "  ")))))
+                                (pcase eol (1 "  dos") (2 "  mac"))
+                              `("  " ,(symbol-name
+                                       (if (eq eol 0) base
+                                         buffer-file-coding-system)))))))
                  face italic)
-                (flymake-mode (flymake-mode-line-error-counter
-                               flymake-mode-line-warning-counter "  "))
-                mode-name mode-line-process
+                (flymake-mode ("  " flymake-mode-line-error-counter
+                               flymake-mode-line-warning-counter
+                               flymake-mode-line-note-counter))
+                "  " mode-name mode-line-process
                 (:eval (when (eq major-mode 'term-mode)
                          (term-line-ending-mode-line)))
                 minor-mode-alist
@@ -338,13 +346,14 @@
 ;;; Flash active mode line for bell
 
 (defface mode-line-flash nil
-  "Face used for flashing mode line.")
+  "Face used for flashing mode line."
+  :group 'custom)
 
 (defvar mode-line-flash-state nil
   "If non-nil, contains buffer with active mode line flash.")
 
 (defun mode-line-flash-end ()
-  "End the mode line flash"
+  "End the mode line flash."
   (when mode-line-flash-state
     (with-current-buffer mode-line-flash-state
       (face-remap-reset-base 'mode-line-active)
@@ -805,7 +814,8 @@ which breaks `text-scale-mode'."
 (advice-add #'eshell-put-history :after #'my-eshell-save-history)
 
 (defface eshell-input nil
-  "Face used for eshell input commands.")
+  "Face used for eshell input commands."
+  :group 'custom)
 
 (defun my-eshell-highlight-last-input ()
   "Highlight last eshell command."
@@ -814,6 +824,9 @@ which breaks `text-scale-mode'."
                        '(face eshell-input)))
 
 (add-hook 'eshell-pre-command-hook #'my-eshell-highlight-last-input)
+
+(defvar vterm-shell)
+(defvar vterm-kill-buffer-on-exit)
 
 (advice-add #'eshell-exec-visual :around
             (lambda (orig-fun &rest args)
@@ -955,7 +968,7 @@ which breaks `text-scale-mode'."
             '((name . meow-term)))
 
 (defvar-local term-line-ending "\n"
-  "Line ending to use for sending to process in `term-mode'")
+  "Line ending to use for sending to process in `term-mode'.")
 
 (defun term-line-ending-sender (proc string)
   "Function to send PROC input STRING and line ending."
@@ -1017,6 +1030,7 @@ which breaks `text-scale-mode'."
 (add-hook 'yas-keymap-disable-hook (lambda () completion-in-region-mode))
 
 (defun setup-eglot ()
+  "Enable eglot and its dependencies."
   (yas-minor-mode)
   (eglot-ensure))
 
@@ -1039,6 +1053,7 @@ which breaks `text-scale-mode'."
   "Function to use for formatting buffer.")
 
 (defun format-region ()
+  "Format the current region using the configured formatter."
   (interactive)
   (if (region-active-p)
       (if format-region-function
@@ -1048,6 +1063,7 @@ which breaks `text-scale-mode'."
     (format-buffer)))
 
 (defun format-buffer ()
+  "Format the current buffer using the configured formatter."
   (interactive)
   (cond (format-buffer-function
          (funcall format-buffer-function))
@@ -1067,7 +1083,11 @@ which breaks `text-scale-mode'."
 (defun formatter-hook-fn (format-on-save
                           region-function
                           &optional buffer-function)
-  "Create hook function to set formatter."
+  "Create hook function to set formatter.
+FORMAT-ON-SAVE enables auto-format on save. REGION-FUNTION is a function to
+format the current region, or nil if region formatting unsupported.
+BUFFER-FUNCTION is a function to format the current buffer. If it is nil,
+REGION-FUNCTION will be used for buffer formatting."
   (lambda ()
     (setq format-region-function region-function)
     (setq format-buffer-function buffer-function)
@@ -1189,6 +1209,9 @@ which breaks `text-scale-mode'."
 (setq elisp-flymake-byte-compile-load-path
       (append elisp-flymake-byte-compile-load-path load-path))
 
+(add-hook 'emacs-lisp-mode-hook #'flymake-mode)
+(add-hook 'emacs-lisp-mode-hook #'format-on-save-mode)
+
 (advice-add 'elisp--company-doc-buffer :around
             (lambda (orig-fun &rest args)
               "Use different help buffer for completion docs."
@@ -1197,8 +1220,6 @@ which breaks `text-scale-mode'."
                            (get-buffer-create " *help-company-doc-buffer*"))))
                 (apply orig-fun args)))
             '((name . custom-help-buffer)))
-
-(add-hook 'emacs-lisp-mode-hook #'format-on-save-mode)
 
 
 ;;; Org
@@ -1209,7 +1230,7 @@ which breaks `text-scale-mode'."
                              '((shell . t)))
 
 (defun my-org-present-init ()
-  "Configure org-present."
+  "Configure `org-present'."
   (display-fill-column-indicator-mode -1)
   (org-display-inline-images)
   (org-present-read-only)
@@ -1217,7 +1238,7 @@ which breaks `text-scale-mode'."
   (org-indent-mode))
 
 (defun my-org-present-quit ()
-  "Clean up org-present configuration."
+  "Clean up `org-present' configuration."
   (display-fill-column-indicator-mode)
   (org-indent-mode -1))
 
@@ -1261,9 +1282,10 @@ which breaks `text-scale-mode'."
 ;;; C/C++
 
 (defvar-local clang-format-enabled nil
-  "Whether clang-format commands should be available in buffer.")
+  "Whether `clang-format' commands should be available in buffer.")
 
 (defun c-formatter-configure ()
+  "Configure formatters for C and C++ files."
   (when (locate-dominating-file default-directory ".clang-format")
     (setq clang-format-enabled t
           format-region-function #'clang-format-region
@@ -1378,7 +1400,7 @@ which breaks `text-scale-mode'."
    (buffer-size) (count-lines (point-min) (point-max))))
 
 (defun open-serial (device)
-  "Run `serial-term' with reasonable defaults."
+  "Run `serial-term' on DEVICE with auto baud rate."
   (interactive
    (list (read-file-name
           "Serial port: " "/dev/" "" t nil
@@ -1420,3 +1442,11 @@ which breaks `text-scale-mode'."
 (gcmh-mode)
 
 (hide-minor-mode 'gcmh-mode)
+
+
+;; Local Variables:
+;; byte-compile-warnings: (not free-vars unresolved)
+;; End:
+
+(provide 'init)
+;;; init.el ends here

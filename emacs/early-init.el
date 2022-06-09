@@ -1,4 +1,11 @@
-;;; early-init.el -*- lexical-binding: t; -*-
+;;; early-init.el --- early init configuration -*- lexical-binding: t; -*-
+
+;;; Commentary:
+
+;; Personal config early-init file.
+
+;;; Code:
+
 
 ;;; Temporarily disable GC
 
@@ -27,3 +34,7 @@
 ;;; Theme
 
 (load-theme 'my-purple t)
+
+
+(provide 'early-init)
+;;; early-init.el ends here
