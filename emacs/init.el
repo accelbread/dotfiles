@@ -1209,7 +1209,10 @@ REGION-FUNCTION will be used for buffer formatting."
 (setq elisp-flymake-byte-compile-load-path
       (append elisp-flymake-byte-compile-load-path load-path))
 
-(add-hook 'emacs-lisp-mode-hook #'flymake-mode)
+(add-hook 'emacs-lisp-mode-hook (lambda ()
+                                  (unless buffer-read-only
+                                    (flymake-mode))))
+
 (add-hook 'emacs-lisp-mode-hook #'format-on-save-mode)
 
 (advice-add 'elisp--company-doc-buffer :around
