@@ -1034,6 +1034,8 @@ which breaks `text-scale-mode'."
 
 ;;; Eglot
 
+(setq eglot-stay-out-of '(eldoc-documentation-strategy))
+
 (advice-add #'eglot-completion-at-point
             :before-until #'inside-program-text-p)
 
@@ -1180,7 +1182,8 @@ REGION-FUNCTION will be used for buffer formatting."
 
 ;;; Eldoc
 
-(setq eldoc-echo-area-prefer-doc-buffer t
+(setq eldoc-documentation-strategy #'eldoc-documentation-compose
+      eldoc-echo-area-prefer-doc-buffer t
       eldoc-minor-mode-string " 📜")
 
 
