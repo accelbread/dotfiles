@@ -639,7 +639,8 @@ which breaks `text-scale-mode'."
       ispell-extra-args '("--camel-case")
       flyspell-issue-message-flag nil
       flyspell-mode-line-string nil
-      flyspell-duplicate-distance 0)
+      flyspell-duplicate-distance 0
+      flyspell-use-meta-tab nil)
 
 (setq-default flyspell-prog-text-faces '(tree-sitter-hl-face:comment
                                          tree-sitter-hl-face:doc
@@ -662,8 +663,20 @@ which breaks `text-scale-mode'."
 (advice-add #'flyspell-generic-progmode-verify
             :override #'inside-program-text-p)
 
-(add-hook 'text-mode-hook #'flyspell-mode)
-(add-hook 'prog-mode-hook #'flyspell-prog-mode)
+(defvar-keymap my-flyspell-map
+  "TAB" #'flyspell-correct-at-point)
+
+(advice-add #'make-flyspell-overlay :filter-return
+            (lambda (overlay)
+              "Add custom keymap to OVERLAY."
+              (overlay-put overlay 'keymap my-flyspell-map)
+              overlay)
+            '((name . flyspell-correct-with-tab)))
+
+(add-hook 'text-mode-hook
+          (lambda () (unless buffer-read-only (flyspell-mode))))
+(add-hook 'prog-mode-hook
+          (lambda () (unless buffer-read-only (flyspell-prog-mode))))
 
 
 ;;; Tramp
