@@ -34,9 +34,9 @@
       '( meow gcmh svg-lib page-break-lines rainbow-delimiters flyspell-correct
          corfu corfu-doc cape kind-icon vertico orderless marginalia consult
          which-key esh-help vterm fish-completion tree-sitter tree-sitter-langs
-         magit magit-todos hl-todo forge code-review virtual-comment rg rmsbolt
-         eglot yasnippet markdown-mode clang-format cmake-mode rust-mode cargo
-         zig-mode scad-mode toml-mode yaml-mode git-modes pdf-tools rainbow-mode
+         magit magit-todos hl-todo virtual-comment eglot yasnippet rg rmsbolt
+         markdown-mode clang-format cmake-mode rust-mode cargo zig-mode
+         scad-mode toml-mode yaml-mode git-modes pdf-tools rainbow-mode
          auto-minor-mode openwith org-present))
 
 (setq package-native-compile t
@@ -1108,7 +1108,6 @@ REGION-FUNCTION will be used for buffer formatting."
       magit-delete-by-moving-to-trash nil)
 
 (with-eval-after-load 'magit
-  (require 'forge)
   (remove-hook 'server-switch-hook #'magit-commit-diff)
   (magit-todos-mode))
 
