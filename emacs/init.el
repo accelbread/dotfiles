@@ -261,6 +261,18 @@
   (hide-minor-mode 'buffer-face-mode))
 
 
+;;; Window layout
+
+(defun my-split-window-sensibly (&optional window)
+  "Split WINDOW, preferring horizontal splits."
+  (let ((window (or window (selected-window))))
+    (or (and (window-splittable-p window t)
+             (with-selected-window window (split-window-right)))
+        (split-window-sensibly window))))
+
+(setq split-window-preferred-function #'my-split-window-sensibly)
+
+
 ;;; Emoji
 
 (after-frame
