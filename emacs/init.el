@@ -333,9 +333,11 @@
                                        (if (eq eol 0) base
                                          buffer-file-coding-system)))))))
                  face italic)
-                (flymake-mode ("  " flymake-mode-line-error-counter
-                               flymake-mode-line-warning-counter
-                               flymake-mode-line-note-counter))
+                (flymake-mode (:eval (when (length> (flymake-diagnostics) 0)
+                                       (list "  "
+                                             flymake-mode-line-error-counter
+                                             flymake-mode-line-warning-counter
+                                             flymake-mode-line-note-counter))))
                 "  " mode-name mode-line-process
                 (:eval (when (eq major-mode 'term-mode)
                          (term-line-ending-mode-line)))
@@ -825,8 +827,6 @@ which breaks `text-scale-mode'."
 
 (add-hook 'eshell-pre-command-hook #'my-eshell-highlight-last-input)
 
-(defvar vterm-shell)
-(defvar vterm-kill-buffer-on-exit)
 
 (advice-add #'eshell-exec-visual :around
             (lambda (orig-fun &rest args)
@@ -835,6 +835,7 @@ which breaks `text-scale-mode'."
               (cl-letf (((symbol-function #'term-mode) #'ignore)
                         ((symbol-function #'term-exec)
                          (lambda (_ _ program _ args)
+                           (defvar vterm-shell)
                            (let ((vterm-shell (string-join
                                                (cons (file-local-name program)
                                                      args)
@@ -848,6 +849,7 @@ which breaks `text-scale-mode'."
 (advice-add #'eshell-term-sentinel :around
             (lambda (orig-fun &rest args)
               "Advise `eshell-term-sentinel' to use vterm."
+              (defvar vterm-kill-buffer-on-exit)
               (cl-letf ((vterm-kill-buffer-on-exit nil)
                         ((symbol-function #'term-sentinel) #'vterm--sentinel))
                 (apply orig-fun args)))
@@ -906,13 +908,13 @@ which breaks `text-scale-mode'."
 
 (add-hook 'vterm-mode-hook
           (lambda ()
-            (add-hook 'meow-normal-enter-hook
-                      (lambda () (use-local-map vterm-normal-mode-map))
-                      nil t)
             (add-hook 'meow-insert-enter-hook
                       (lambda ()
                         (use-local-map vterm-mode-map)
                         (vterm-goto-char (point)))
+                      nil t)
+            (add-hook 'meow-insert-exit-hook
+                      (lambda () (use-local-map vterm-normal-mode-map))
                       nil t)))
 
 
@@ -942,18 +944,17 @@ which breaks `text-scale-mode'."
 
 (add-hook 'term-mode-hook
           (lambda ()
-            "Ensure normal mode has line keybindings."
-            (add-hook 'meow-normal-enter-hook
-                      (lambda ()
-                        (let ((meow-term-char-temp meow-term-char))
-                          (term-line-mode)
-                          (setq meow-term-char meow-term-char-temp)
-                          (term-update-mode-line)))
-                      nil t)
+            "Ensure line keybindings outside of insert mode."
             (add-hook 'meow-insert-enter-hook
                       (lambda ()
+                        (when meow-term-char (term-char-mode)))
+                      nil t)
+            (add-hook 'meow-insert-exit-hook
+                      (lambda ()
                         (when meow-term-char
-                          (term-char-mode)))
+                          (term-line-mode)
+                          (setq meow-term-char t)
+                          (term-update-mode-line)))
                       nil t)))
 
 (advice-add #'term-update-mode-line :around
@@ -1084,7 +1085,7 @@ which breaks `text-scale-mode'."
                           region-function
                           &optional buffer-function)
   "Create hook function to set formatter.
-FORMAT-ON-SAVE enables auto-format on save. REGION-FUNTION is a function to
+FORMAT-ON-SAVE enables auto-format on save. REGION-FUNCTION is a function to
 format the current region, or nil if region formatting unsupported.
 BUFFER-FUNCTION is a function to format the current buffer. If it is nil,
 REGION-FUNCTION will be used for buffer formatting."
@@ -1325,6 +1326,7 @@ REGION-FUNCTION will be used for buffer formatting."
 (defun ipython ()
   "Run ipython in vterm."
   (interactive)
+  (defvar vterm-shell)
   (let ((vterm-shell "ipython"))
     (vterm-other-window)))
 
