@@ -19,7 +19,7 @@
 (setq network-security-level 'high
       gnutls-verify-error t
       gnutls-min-prime-bits 3072
-      gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2:-VERS-TLS1.1:-VERS-TLS1.0")
+      gnutls-algorithm-priority "PFS:-VERS-TLS1.2:-VERS-TLS1.1:-VERS-TLS1.0")
 
 (setq auth-sources '("~/.authinfo.gpg"))
 
