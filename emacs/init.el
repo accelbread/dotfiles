@@ -33,11 +33,11 @@
 (setq package-selected-packages
       '( meow gcmh svg-lib page-break-lines rainbow-delimiters flyspell-correct
          corfu corfu-doc cape kind-icon vertico orderless marginalia consult
-         which-key esh-help vterm fish-completion tree-sitter tree-sitter-langs
+         which-key vterm fish-completion tree-sitter tree-sitter-langs openwith
          magit magit-todos hl-todo virtual-comment eglot yasnippet rg rmsbolt
          markdown-mode clang-format cmake-mode rust-mode cargo zig-mode
          scad-mode toml-mode yaml-mode git-modes pdf-tools rainbow-mode
-         auto-minor-mode openwith org-present))
+         org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -762,9 +762,6 @@ which breaks `text-scale-mode'."
       eshell-ls-clutter-regexp "\\`\\'"
       eshell-ls-product-regexp "\\`\\'")
 
-(with-eval-after-load 'eshell
-  (setup-esh-help-eldoc))
-
 (with-eval-after-load 'esh-cmd
   (dolist (v '(eshell-last-commmand-name
                eshell-last-command-status
@@ -1253,6 +1250,14 @@ REGION-FUNCTION will be used for buffer formatting."
                 (apply orig-fun args)))
             '((name . custom-help-buffer)))
 
+(defun theme-enable-rainbow-mode ()
+  "Enable `rainbow-mode' in Emacs themes."
+  (when (and buffer-file-name
+             (string-match-p "-theme\\.el$" buffer-file-name))
+    (rainbow-mode)))
+
+(add-hook 'emacs-lisp-mode-hook #'theme-enable-rainbow-mode)
+
 
 ;;; Org
 
@@ -1367,13 +1372,6 @@ REGION-FUNCTION will be used for buffer formatting."
                           t #'indent-region #'zig-format-buffer))
 
 (put 'zig-toggle-format-on-save 'completion-predicate #'ignore)
-
-
-;;; Themes
-
-(setq custom-safe-themes t)
-
-(add-to-list 'auto-minor-mode-alist '("-theme\\.el\\'" . rainbow-mode))
 
 
 ;;; PDF
