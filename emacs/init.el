@@ -641,7 +641,11 @@ which breaks `text-scale-mode'."
 (define-key corfu-map ["M-p"] #'corfu-doc-scroll-down)
 (define-key corfu-map ["M-n"] #'corfu-doc-scroll-up)
 
-(add-hook 'meow-insert-exit-hook (lambda () (when corfu-mode (corfu-quit))))
+(defun cleanup-corfu ()
+  "Close corfu popup if it is active."
+  (when corfu-mode (corfu-quit)))
+
+(add-hook 'meow-insert-exit-hook #'cleanup-corfu)
 
 
 ;;; Spell checking
@@ -685,10 +689,16 @@ which breaks `text-scale-mode'."
               overlay)
             '((name . flyspell-correct-with-tab)))
 
-(add-hook 'text-mode-hook
-          (lambda () (unless buffer-read-only (flyspell-mode))))
-(add-hook 'prog-mode-hook
-          (lambda () (unless buffer-read-only (flyspell-prog-mode))))
+(defun enable-flyspell ()
+  "Enable `flyspell-mode' if buffer can be modified."
+  (unless buffer-read-only (flyspell-mode)))
+
+(defun enable-flyspell-prog ()
+  "Enable `flyspell-prog-mode' if buffer can be modified."
+  (unless buffer-read-only (flyspell-prog-mode)))
+
+(add-hook 'text-mode-hook #'enable-flyspell)
+(add-hook 'prog-mode-hook #'enable-flyspell-prog)
 
 
 ;;; Tramp
@@ -928,16 +938,21 @@ which breaks `text-scale-mode'."
 (define-key vterm-normal-mode-map
             [remap end-of-defun] #'vterm-next-prompt)
 
-(add-hook 'vterm-mode-hook
-          (lambda ()
-            (add-hook 'meow-insert-enter-hook
-                      (lambda ()
-                        (use-local-map vterm-mode-map)
-                        (vterm-goto-char (point)))
-                      nil t)
-            (add-hook 'meow-insert-exit-hook
-                      (lambda () (use-local-map vterm-normal-mode-map))
-                      nil t)))
+(defun meow-vterm-insert-enter ()
+  "Enable vterm default binding in insert and set cursor."
+  (use-local-map vterm-mode-map)
+  (vterm-goto-char (point)))
+
+(defun meow-vterm-insert-exit ()
+  "Use regular bindings in normal mode."
+  (use-local-map vterm-normal-mode-map))
+
+(defun meow-vterm-setup-hooks ()
+  "Configure insert mode for vterm."
+  (add-hook 'meow-insert-enter-hook #'meow-vterm-insert-enter nil t)
+  (add-hook 'meow-insert-exit-hook #'meow-vterm-insert-exit nil t))
+
+(add-hook 'vterm-mode-hook #'meow-vterm-setup-hooks)
 
 
 ;;; Term
@@ -964,20 +979,23 @@ which breaks `text-scale-mode'."
               (term-update-mode-line))
             '((name . meow-term)))
 
-(add-hook 'term-mode-hook
-          (lambda ()
-            "Ensure line keybindings outside of insert mode."
-            (add-hook 'meow-insert-enter-hook
-                      (lambda ()
-                        (when meow-term-char (term-char-mode)))
-                      nil t)
-            (add-hook 'meow-insert-exit-hook
-                      (lambda ()
-                        (when meow-term-char
-                          (term-line-mode)
-                          (setq meow-term-char t)
-                          (term-update-mode-line)))
-                      nil t)))
+(defun meow-term-insert-enter ()
+  "Switch keybinds to char mode if char mode set."
+  (when meow-term-char (term-char-mode)))
+
+(defun meow-term-insert-exit ()
+  "Switch to line keybinds if in char mode."
+  (when meow-term-char
+    (term-line-mode)
+    (setq meow-term-char t)
+    (term-update-mode-line)))
+
+(defun meow-term-setup-hooks ()
+  "Ensure line keybindings outside of insert mode."
+  (add-hook 'meow-insert-enter-hook #'meow-term-insert-enter nil t)
+  (add-hook 'meow-insert-exit-hook #'meow-term-insert-exit nil t))
+
+(add-hook 'term-mode-hook #'meow-term-setup-hooks)
 
 (advice-add #'term-update-mode-line :around
             (lambda (oldfun)
@@ -1043,7 +1061,8 @@ which breaks `text-scale-mode'."
 
 ;;; Eglot
 
-(setq eglot-stay-out-of '(eldoc-documentation-strategy))
+(setq eglot-stay-out-of '(eldoc-documentation-strategy)
+      eglot-autoshutdown t)
 
 (advice-add #'eglot-completion-at-point
             :before-until #'inside-program-text-p)
@@ -1052,7 +1071,7 @@ which breaks `text-scale-mode'."
   (hide-minor-mode 'yas-minor-mode)
   (setq yas-minor-mode-map (make-sparse-keymap)))
 
-(add-hook 'yas-keymap-disable-hook (lambda () completion-in-region-mode))
+(setq yas-keymap-disable-hook (lambda () completion-in-region-mode))
 
 (defun setup-eglot ()
   "Enable eglot and its dependencies."
@@ -1135,10 +1154,12 @@ REGION-FUNCTION will be used for buffer formatting."
   (remove-hook 'server-switch-hook #'magit-commit-diff)
   (magit-todos-mode))
 
-(add-hook 'magit-mode-hook
-          (lambda ()
-            (setq meow-motion-next-function #'magit-section-forward)
-            (setq meow-motion-prev-function #'magit-section-backward)))
+(defun meow-magit-movement-configure ()
+  "Set j/k in motion mode for `magit'."
+  (setq meow-motion-next-function #'magit-section-forward
+        meow-motion-prev-function #'magit-section-backward))
+
+(add-hook 'magit-mode-hook #'meow-magit-movement-configure)
 
 
 ;;; Ediff
@@ -1201,6 +1222,11 @@ REGION-FUNCTION will be used for buffer formatting."
 (setq flymake-mode-line-format nil
       flymake-suppress-zero-counters t)
 
+(defun enable-flymake ()
+  "Enable flymake mode if buffer is modifiable."
+  (unless buffer-read-only
+    (flymake-mode)))
+
 
 ;;; Help
 
@@ -1217,10 +1243,12 @@ REGION-FUNCTION will be used for buffer formatting."
 
 (add-hook 'Info-mode-hook #'variable-pitch-mode)
 
-(add-hook 'Info-mode-hook
-          (lambda ()
-            (setq meow-motion-next-function #'Info-scroll-up)
-            (setq meow-motion-prev-function #'Info-scroll-down)))
+(defun meow-info-movement-configure ()
+  "Set j/k in motion mode for `Info-mode'."
+  (setq meow-motion-next-function #'Info-scroll-up
+        meow-motion-prev-function #'Info-scroll-down))
+
+(add-hook 'Info-mode-hook #'meow-info-movement-configure)
 
 
 ;;; Man
@@ -1235,9 +1263,7 @@ REGION-FUNCTION will be used for buffer formatting."
 (setq elisp-flymake-byte-compile-load-path
       (append elisp-flymake-byte-compile-load-path load-path))
 
-(add-hook 'emacs-lisp-mode-hook (lambda ()
-                                  (unless buffer-read-only
-                                    (flymake-mode))))
+(add-hook 'emacs-lisp-mode-hook #'enable-flymake)
 
 (add-hook 'emacs-lisp-mode-hook #'format-on-save-mode)
 
@@ -1302,9 +1328,14 @@ REGION-FUNCTION will be used for buffer formatting."
   (push-default '(rust-analyzer (checkOnSave (command . "clippy")))
                 eglot-workspace-configuration))
 
+(defun rust-formatter-configure ()
+  "Configure formatters for Rust files."
+  (setq format-region-function #'indent-region
+        format-buffer-function #'rust-format-buffer)
+  (format-on-save-mode))
+
 (add-hook 'rust-mode-hook #'setup-eglot)
-(add-hook 'rust-mode-hook (formatter-hook-fn
-                           t #'indent-region #'rust-format-buffer))
+(add-hook 'rust-mode-hook #'rust-formatter-configure)
 (add-hook 'rust-mode-hook #'cargo-minor-mode)
 
 (add-hook 'toml-mode-hook #'cargo-minor-mode)
@@ -1337,8 +1368,11 @@ REGION-FUNCTION will be used for buffer formatting."
 (with-eval-after-load 'cc-mode
   (setf (alist-get 'other c-default-style) "stroustrup"))
 
-(add-hook 'c-mode-hook
-          (lambda () (setf (alist-get 'inextern-lang c-offsets-alist) [0])))
+(defun c-set-extern-offset-0 ()
+  "Set the indentation for extern blocks to 0."
+  (setf (alist-get 'inextern-lang c-offsets-alist) [0]))
+
+(add-hook 'c-mode-hook #'c-set-extern-offset-0)
 
 (add-hook 'c-mode-hook #'setup-eglot)
 (add-hook 'c-mode-hook #'c-formatter-configure)
@@ -1367,9 +1401,14 @@ REGION-FUNCTION will be used for buffer formatting."
 
 (setq zig-format-on-save nil)
 
+(defun zig-formatter-configure ()
+  "Configure formatters for Zig files."
+  (setq format-region-function #'indent-region
+        format-buffer-function #'zig-format-buffer)
+  (format-on-save-mode))
+
 (add-hook 'zig-mode-hook #'setup-eglot)
-(add-hook 'zig-mode-hook (formatter-hook-fn
-                          t #'indent-region #'zig-format-buffer))
+(add-hook 'zig-mode-hook #'zig-format-buffer)
 
 (put 'zig-toggle-format-on-save 'completion-predicate #'ignore)
 
