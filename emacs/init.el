@@ -869,9 +869,8 @@
 
 (defun my-eshell-highlight-last-input ()
   "Highlight last eshell command."
-  (add-text-properties eshell-last-input-start
-                       (1- eshell-last-input-end)
-                       '(face eshell-input)))
+  (let ((ov (make-overlay eshell-last-input-start (1- eshell-last-input-end))))
+    (overlay-put ov 'face 'eshell-input)))
 
 (add-hook 'eshell-pre-command-hook #'my-eshell-highlight-last-input)
 
