@@ -613,6 +613,20 @@
 
 (meow-global-mode)
 
+(defvar meow-previous-selected-buffer nil
+  "Last known selected buffer for deactivating insert mode.")
+
+(defun meow-leave-insert-on-deselect (&rest _)
+  "If active buffer has changed, deactivate insert mode in previous buffer."
+  (unless (or (minibufferp)
+              (eq meow-previous-selected-buffer (current-buffer)))
+    (when (buffer-live-p meow-previous-selected-buffer)
+      (with-current-buffer meow-previous-selected-buffer
+        (meow-insert-exit)))
+    (setq meow-previous-selected-buffer (current-buffer))))
+
+(push #'meow-leave-insert-on-deselect window-state-change-functions)
+
 
 ;;; Completion
 
