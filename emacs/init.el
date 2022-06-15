@@ -31,13 +31,12 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (setq package-selected-packages
-      '( meow gcmh svg-lib page-break-lines rainbow-delimiters flyspell-correct
+      '( meow gcmh svg-lib rainbow-delimiters flyspell-correct which-key rg
          corfu corfu-doc cape kind-icon vertico orderless marginalia consult
-         which-key vterm fish-completion tree-sitter tree-sitter-langs openwith
-         magit magit-todos hl-todo virtual-comment eglot yasnippet rg rmsbolt
-         markdown-mode clang-format cmake-mode rust-mode cargo zig-mode
-         scad-mode toml-mode yaml-mode git-modes pdf-tools rainbow-mode
-         org-present))
+         vterm fish-completion tree-sitter tree-sitter-langs magit magit-todos
+         hl-todo virtual-comment eglot yasnippet rmsbolt markdown-mode
+         clang-format cmake-mode rust-mode cargo zig-mode scad-mode toml-mode
+         yaml-mode git-modes pdf-tools rainbow-mode org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -118,19 +117,6 @@
     (if-let* ((inherit (face-attribute face :inherit))
               (listp inherit))
         (mapc #'load-face inherit))))
-
-(defmacro window-font-dim-override (face &rest body)
-  "Execute BODY with FACE as default for height/width calculation."
-  (declare (indent 1))
-  `(cl-letf* ((orig-window-font-width (symbol-function 'window-font-width))
-              (orig-window-font-height (symbol-function 'window-font-height))
-              ((symbol-function 'window-font-width)
-               (lambda ()
-                 (funcall orig-window-font-width nil ,face)))
-              ((symbol-function 'window-font-height)
-               (lambda ()
-                 (funcall orig-window-font-height nil ,face))))
-     ,@body))
 
 
 ;;; Hide welcome messages
@@ -308,6 +294,19 @@
 
 (setq mode-line-compact 'long)
 
+(defmacro window-font-dim-override (face &rest body)
+  "Execute BODY with FACE as default for height/width calculation."
+  (declare (indent 1))
+  `(cl-letf* ((orig-window-font-width (symbol-function 'window-font-width))
+              (orig-window-font-height (symbol-function 'window-font-height))
+              ((symbol-function 'window-font-width)
+               (lambda ()
+                 (funcall orig-window-font-width nil ,face)))
+              ((symbol-function 'window-font-height)
+               (lambda ()
+                 (funcall orig-window-font-height nil ,face))))
+     ,@body))
+
 (setq-default mode-line-format
               `("%e "
                 (:eval (when (window-dedicated-p) "📌"))
@@ -385,19 +384,24 @@
 
 ;;; Display page breaks as lines
 
-(setq page-break-lines-max-width 80
-      page-break-lines-lighter nil)
+(defun display-page-breaks-as-lines ()
+  "Configure font-lock to display lines with only a page break as a line."
+  (font-lock-add-keywords
+   nil
+   `(("^\f$"
+      0
+      (prog1 'shadow
+        (let ((line (make-overlay (match-beginning 0) (match-end 0))))
+          (overlay-put line 'display (make-string fill-column ?─))
+          (dolist (prop '(modification-hooks
+                          insert-in-front-hooks
+                          insert-behind-hooks))
+            (overlay-put line prop
+                         '((lambda (overlay &rest _)
+                             (delete-overlay overlay)))))))
+      t))))
 
-(advice-add #'page-break-lines--update-display-table :around
-            (lambda (orig-fun &rest args)
-              "Disable `set-face-attribute'.
-`page-break-lines-mode' sets the height of its face to the default face height
-which breaks `text-scale-mode'."
-              (cl-letf (((symbol-function #'set-face-attribute) #'ignore))
-                (apply orig-fun args)))
-            '((name . ignore-setting-face)))
-
-(global-page-break-lines-mode)
+(add-hook 'after-change-major-mode-hook #'display-page-breaks-as-lines)
 
 
 ;;; Inline annotations
@@ -789,10 +793,8 @@ which breaks `text-scale-mode'."
   (require 'tramp))
 
 (with-eval-after-load 'esh-mode
-  (setq eshell-output-filter-functions
-        (cons #'eshell-truncate-buffer
-              (remove #'eshell-postoutput-scroll-to-bottom
-                      eshell-output-filter-functions)))
+  (push #'eshell-truncate-buffer
+        eshell-output-filter-functions)
   (define-key eshell-mode-map
               [remap beginning-of-defun] #'eshell-previous-prompt)
   (define-key eshell-mode-map
@@ -1419,23 +1421,6 @@ REGION-FUNCTION will be used for buffer formatting."
 
 (with-eval-after-load 'pdf-view
   (hide-minor-mode 'pdf-view-midnight-minor-mode))
-
-
-;;; Open outside Emacs
-
-(setq openwith-associations
-      '(("\\.mkv\\'" "umpv" (file))))
-
-(openwith-mode)
-
-(advice-add #'abort-if-file-too-large :around
-            (lambda (orig-fun size op-type filename &optional offer-raw)
-              "Skip size warning for externally handled file types."
-              (unless (string-match-p
-                       (mapconcat #'car openwith-associations "\\|")
-                       filename)
-                (funcall orig-fun size op-type filename offer-raw)))
-            '((name . skip-internal-files)))
 
 
 ;;; Commands
