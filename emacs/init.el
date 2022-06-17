@@ -1272,6 +1272,14 @@ REGION-FUNCTION will be used for buffer formatting."
 
 (add-hook 'Man-mode-hook #'variable-pitch-mode)
 
+;; Use monospace for lines with box-drawing characters
+(font-lock-add-keywords
+ 'Man-mode
+ `(("^.*[\u2500-\u257F].*$"
+    0
+    'fixed-pitch
+    append)))
+
 
 ;;; Elisp
 
