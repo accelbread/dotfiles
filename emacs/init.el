@@ -33,10 +33,10 @@
 (setq package-selected-packages
       '( meow gcmh svg-lib rainbow-delimiters flyspell-correct which-key rg
          corfu corfu-doc cape kind-icon vertico orderless marginalia consult
-         vterm fish-completion tree-sitter tree-sitter-langs magit magit-todos
-         hl-todo virtual-comment eglot yasnippet rmsbolt markdown-mode
-         clang-format cmake-mode rust-mode cargo zig-mode scad-mode toml-mode
-         yaml-mode git-modes pdf-tools rainbow-mode org-present))
+         vterm fish-completion magit magit-todos hl-todo virtual-comment rmsbolt
+         eglot yasnippet markdown-mode clang-format cmake-mode rust-mode cargo
+         zig-mode scad-mode toml-mode yaml-mode git-modes pdf-tools rainbow-mode
+         org-present))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -80,10 +80,7 @@
   "Set the header-line face to use fixed-pitch in the current buffer."
   (face-remap-add-relative 'header-line '(:inherit (fixed-pitch))))
 
-(defvar program-text-faces '(tree-sitter-hl-face:comment
-                             tree-sitter-hl-face:doc
-                             tree-sitter-hl-face:string
-                             font-lock-comment-face
+(defvar program-text-faces '(font-lock-comment-face
                              font-lock-doc-face
                              font-lock-string-face)
   "Faces corresponding to text in `prog-mode' buffers.")
@@ -1094,15 +1091,6 @@
   (eglot-ensure))
 
 
-;;; Treesitter
-
-(global-tree-sitter-mode)
-
-(hide-minor-mode 'tree-sitter-mode)
-
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-
-
 ;;; Formatting
 
 (defvar-local format-region-function #'indent-region
@@ -1395,17 +1383,23 @@ REGION-FUNCTION will be used for buffer formatting."
   "Set the indentation for extern blocks to 0."
   (setf (alist-get 'inextern-lang c-offsets-alist) [0]))
 
+;; Hook is used to ensure highlighting is applied after rainbow delimiters.
+(defun set-c-mode-font-overrides ()
+  "Enable custom `c-mode' highlighting in the current buffer."
+  (font-lock-add-keywords
+   nil
+   '(("#include \\(.*\\)" 1 'font-lock-constant-face t))
+   'append))
+
 (add-hook 'c-mode-hook #'c-set-extern-offset-0)
 
+(add-hook 'c-mode-hook #'set-c-mode-font-overrides)
 (add-hook 'c-mode-hook #'setup-eglot)
 (add-hook 'c-mode-hook #'c-formatter-configure)
 
+(add-hook 'c++-mode-hook #'set-c-mode-font-overrides)
 (add-hook 'c++-mode-hook #'setup-eglot)
 (add-hook 'c++-mode-hook #'c-formatter-configure)
-
-(tree-sitter-hl-add-patterns 'c
-  [(system_lib_string) @constructor
-   (preproc_include (string_literal) @constructor)])
 
 
 ;;; Python
