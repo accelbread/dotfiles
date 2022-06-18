@@ -1088,7 +1088,7 @@
 (defun setup-eglot ()
   "Enable eglot and its dependencies."
   (yas-minor-mode)
-  (eglot-ensure))
+  (add-hook 'hack-local-variables-hook #'eglot-ensure nil t))
 
 
 ;;; Formatting
@@ -1225,10 +1225,16 @@ REGION-FUNCTION will be used for buffer formatting."
 (setq flymake-mode-line-format nil
       flymake-suppress-zero-counters t)
 
-(defun enable-flymake ()
-  "Enable flymake mode if buffer is modifiable."
+(defun enable-flymake-after-locals ()
+  "Hook function for `hack-local-variables-hook' to enable `flymake'."
   (unless buffer-read-only
     (flymake-mode)))
+
+(defun enable-flymake ()
+  "Enable `flymake-mode' if buffer is modifiable."
+  (add-hook 'hack-local-variables-hook
+            #'enable-flymake-after-locals
+            nil t))
 
 
 ;;; Help
