@@ -1259,6 +1259,11 @@ REGION-FUNCTION will be used for buffer formatting."
 
 (add-hook 'Info-mode-hook #'meow-info-movement-configure)
 
+(font-lock-add-keywords
+ 'Info-mode
+ '(("^[ -]*" 0 'fixed-pitch append)
+   ("^        .*" 0 'fixed-pitch append)))
+
 
 ;;; Man
 
@@ -1269,10 +1274,20 @@ REGION-FUNCTION will be used for buffer formatting."
 ;; Use monospace for lines with box-drawing characters
 (font-lock-add-keywords
  'Man-mode
- `(("^.*[\u2500-\u257F].*$"
-    0
-    'fixed-pitch
-    append)))
+ '(("^.*[\u2500-\u257F].*" 0 'fixed-pitch append)))
+
+
+;;; Shortdoc
+
+(add-hook 'shortdoc-mode-hook #'variable-pitch-mode)
+
+(font-lock-add-keywords
+ 'shortdoc-mode
+ '(("^ *" 0 'fixed-pitch append)
+   (" ?[(⇒→].*" 0 'fixed-pitch append)
+   ("^[a-zA-Z].*" 0 'info-title-3 append)))
+
+(setf (alist-get 'shortdoc-mode meow-mode-state-list) 'normal)
 
 
 ;;; Elisp
