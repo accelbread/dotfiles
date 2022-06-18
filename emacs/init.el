@@ -1449,8 +1449,8 @@ REGION-FUNCTION will be used for buffer formatting."
   "Message info about buffer/point/region size/position/etc."
   (interactive)
   (message
-   (concat "Point: %d, %d:%d\n"
-           "Buffer: %d, %d lines"
+   (concat "Point: line %d, col %d, pos %d\n"
+           "Buffer: %d chars, %d lines"
            (when (region-active-p)
              (let* ((region-lines (count-lines (region-beginning) (region-end)))
                     (start-line (count-lines (point-min) (region-beginning)))
@@ -1461,12 +1461,12 @@ REGION-FUNCTION will be used for buffer formatting."
                     (end-col (save-excursion
                                (set-window-point nil (region-end))
                                (current-column))))
-               (format "\nRegion: %d, %d:%d [%d:%d - %d:%d]"
+               (format "\nRegion: %d chars, %d lines, %d cols [%d:%d - %d:%d]"
                        (- (region-end) (region-beginning))
                        region-lines (- end-col start-col)
                        start-line start-col
                        end-line end-col))))
-   (point) (1+ (current-line)) (current-column)
+   (1+ (current-line)) (current-column) (point)
    (buffer-size) (count-lines (point-min) (point-max))))
 
 (defun open-serial (device)
