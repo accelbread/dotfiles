@@ -1301,6 +1301,12 @@ REGION-FUNCTION will be used for buffer formatting."
 
 (add-hook 'emacs-lisp-mode-hook #'theme-enable-rainbow-mode)
 
+(dir-locals-set-class-variables
+ 'elpa-src '((nil . ((buffer-read-only . t)))))
+
+(dir-locals-set-directory-class
+ (file-name-concat user-emacs-directory "elpa") 'elpa-src)
+
 
 ;;; Org
 
