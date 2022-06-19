@@ -1329,6 +1329,16 @@ REGION-FUNCTION will be used for buffer formatting."
       org-babel-load-languages '((emacs-lisp . t)
                                  (shell . t)))
 
+(defun org-babel-apply-ansi-color ()
+  "Hook function to apply ansi colors to `org-babel' result."
+  (defvar ansi-color-context-region)
+  (let ((ansi-color-context-region nil))
+    (save-excursion
+      (goto-char (org-babel-where-is-src-block-result))
+      (ansi-color-apply-on-region (point) (org-babel-result-end)))))
+
+(add-hook 'org-babel-after-execute-hook 'org-babel-apply-ansi-color)
+
 
 ;;; Markdown
 
