@@ -1325,10 +1325,9 @@ REGION-FUNCTION will be used for buffer formatting."
 
 ;;; Org
 
-(setq org-elipsis " ▼")
-
-(org-babel-do-load-languages 'org-babel-load-languages
-                             '((shell . t)))
+(setq org-elipsis " ▼"
+      org-babel-load-languages '((emacs-lisp . t)
+                                 (shell . t)))
 
 (defun my-org-present-init ()
   "Configure `org-present'."
