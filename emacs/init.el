@@ -35,8 +35,8 @@
          corfu corfu-doc cape kind-icon vertico orderless marginalia consult
          vterm fish-completion magit magit-todos hl-todo virtual-comment rmsbolt
          eglot yasnippet markdown-mode clang-format cmake-mode rust-mode cargo
-         zig-mode scad-mode toml-mode yaml-mode git-modes pdf-tools rainbow-mode
-         org-present))
+         zig-mode scad-mode toml-mode yaml-mode git-modes pdf-tools
+         rainbow-mode))
 
 (setq package-native-compile t
       native-comp-async-report-warnings-errors nil
@@ -1329,22 +1329,6 @@ REGION-FUNCTION will be used for buffer formatting."
       org-babel-load-languages '((emacs-lisp . t)
                                  (shell . t)))
 
-(defun my-org-present-init ()
-  "Configure `org-present'."
-  (display-fill-column-indicator-mode -1)
-  (org-display-inline-images)
-  (org-present-read-only)
-  (org-present-big)
-  (org-indent-mode))
-
-(defun my-org-present-quit ()
-  "Clean up `org-present' configuration."
-  (display-fill-column-indicator-mode)
-  (org-indent-mode -1))
-
-(add-hook 'org-present-mode-hook #'my-org-present-init)
-(add-hook 'org-present-mode-quit-hook #'my-org-present-quit)
-
 
 ;;; Markdown
 
@@ -1354,6 +1338,14 @@ REGION-FUNCTION will be used for buffer formatting."
       markdown-unordered-list-item-prefix nil
       markdown-disable-tooltip-prompt t
       markdown-command '("pandoc" "--from=markdown" "--to=html5"))
+
+(advice-add 'markdown-fontify-hrs :around
+            (lambda (orig-fun &rest args)
+              "Use `fill-column' for hr width."
+              (cl-letf (((symbol-function #'window-body-width)
+                         (lambda (&rest _) (1+ fill-column))))
+                (apply orig-fun args)))
+            '((name . fixed-hr-length)))
 
 
 ;;; Rust
@@ -1462,6 +1454,66 @@ REGION-FUNCTION will be used for buffer formatting."
 
 (with-eval-after-load 'pdf-view
   (hide-minor-mode 'pdf-view-midnight-minor-mode))
+
+
+;;; Present
+
+(defun narrow-prior-page ()
+  "Widen then narrow to the previous page."
+  (interactive)
+  (let ((inhibit-redisplay t))
+    (widen)
+    (backward-page 2)
+    (narrow-to-page)))
+
+(defun narrow-next-page ()
+  "Widen then narrow to the next page."
+  (interactive)
+  (let ((inhibit-redisplay t))
+    (widen)
+    (forward-page)
+    (narrow-to-page)))
+
+(defvar presentation-mode--exit-hook nil
+  "Hook run when exiting `presentation-mode'.")
+
+(define-minor-mode presentation-mode
+  "Present a buffer as a slideshow, delimiting with page breaks."
+  :lighter " Present"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map ["<prior>"] #'narrow-prior-page)
+            (define-key map ["<next>"] #'narrow-next-page)
+            map)
+  (if presentation-mode
+      (let ((inhibit-redisplay t))
+        (text-scale-set 5)
+        (when display-fill-column-indicator-mode
+          (display-fill-column-indicator-mode -1)
+          (add-hook 'presentation-mode--exit-hook
+                    #'display-fill-column-indicator-mode nil t))
+        (when (eq major-mode 'markdown-mode)
+          (unless markdown-hide-markup
+            (markdown-toggle-markup-hiding 1)
+            (add-hook 'presentation-mode--exit-hook
+                      (lambda () (markdown-toggle-markup-hiding -1)) nil t))
+          (unless markdown-header-scaling
+            (markdown-update-header-faces t)
+            (add-hook 'presentation-mode--exit-hook
+                      #'markdown-update-header-faces nil t))
+          (markdown-display-inline-images))
+        (when (eq major-mode 'org-mode)
+          (unless (and (boundp org-indent-mode)
+                       org-indent-mode)
+            (org-indent-mode)
+            (add-hook 'presentation-mode--exit-hook
+                      (lambda () (org-indent-mode -1)) nil t))
+          (org-display-inline-images))
+        (narrow-to-page))
+    (let ((inhibit-redisplay t))
+      (widen)
+      (text-scale-set 0)
+      (run-hooks 'presentation-mode-exit-hook)
+      (setq presentation-mode--exit-hook nil))))
 
 
 ;;; Commands
