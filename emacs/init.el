@@ -220,6 +220,7 @@
       resize-mini-windows t
       enable-recursive-minibuffers t
       suggest-key-bindings nil
+      truncate-partial-width-windows 83
       mouse-drag-and-drop-region t
       mouse-yank-at-point t)
 
