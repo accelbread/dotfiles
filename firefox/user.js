@@ -172,7 +172,6 @@ user_pref("security.insecure_connection_text.enabled", true);
 user_pref("security.mixed_content.block_active_content", true);
 user_pref("security.mixed_content.block_display_content", true);
 user_pref("security.pki.crlite_mode", 2);
-user_pref("security.pki.sha1_enforcement_level", 1);
 user_pref("security.remote_settings.crlite_filters.enabled", true);
 user_pref("security.ssl.enable_false_start", false);
 user_pref("security.ssl.require_safe_negotiation", true);

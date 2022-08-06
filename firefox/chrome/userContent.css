@@ -24,12 +24,8 @@
   div[aria-label="Help"],
   button[aria-label="Send a gift"],
   button[aria-label="Open GIF picker"],
-  div#private-channels > * > a[href="/store"],
-  div#private-channels > * > a[href="/discovery"] {
+  a[href="/store"] {
     display: none !important;
-  }
-  div[class*='cozyMessage'] {
-    border-top: 1px solid #1f2335 !important;
   }
   div[class*='wrapperSimple'] {
       border-radius: 50% !important;
