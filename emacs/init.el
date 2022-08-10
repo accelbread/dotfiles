@@ -1522,6 +1522,10 @@ REGION-FUNCTION will be used for buffer formatting."
           (display-fill-column-indicator-mode -1)
           (add-hook 'presentation-mode--exit-hook
                     #'display-fill-column-indicator-mode nil t))
+        (when flyspell-mode
+          (flyspell-mode -1)
+          (add-hook 'presentation-mode--exit-hook
+                    #'flyspell-mode nil t))
         (when (eq major-mode 'markdown-mode)
           (unless markdown-hide-markup
             (markdown-toggle-markup-hiding 1)
