@@ -409,6 +409,14 @@
 (with-eval-after-load 'virtual-comment
   (hide-minor-mode 'virtual-comment-mode " 📝"))
 
+(defun enable-evc-if-exists ()
+  "Enable `evc' in project if its been used before."
+  (when (and buffer-file-name
+             (locate-dominating-file default-directory ".evc"))
+    (virtual-comment-mode)))
+
+(add-hook 'after-change-major-mode-hook #'enable-evc-if-exists)
+
 
 ;;; Performance
 
