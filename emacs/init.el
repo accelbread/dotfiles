@@ -1372,6 +1372,12 @@ REGION-FUNCTION will be used for buffer formatting."
                 (apply orig-fun args)))
             '((name . fixed-hr-length)))
 
+(defun markdown-set-page-delimiter ()
+  "Set `page-delimiter' to a markdown thematic break."
+  (setq page-delimiter markdown-regex-hr))
+
+(add-hook 'markdown-mode-hook #'markdown-set-page-delimiter)
+
 
 ;;; Rust
 
