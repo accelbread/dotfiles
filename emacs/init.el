@@ -1341,6 +1341,7 @@ REGION-FUNCTION will be used for buffer formatting."
 
 (setq org-elipsis " ▼"
       org-babel-load-languages '((emacs-lisp . t)
+                                 (C . t)
                                  (shell . t)))
 
 (defun org-babel-apply-ansi-color ()
