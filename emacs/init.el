@@ -101,11 +101,11 @@
 
 (add-hook 'server-after-make-frame-hook #'run-after-frame-hook)
 
-(defmacro after-frame (&rest args)
-  "Run ARGS now if not daemon and after first frame if daemon."
+(defmacro after-frame (&rest body)
+  "Run BODY now if not daemon and after first frame if daemon."
   (if (daemonp)
-      `(add-hook 'after-frame-hook (lambda () ,@args))
-    `(progn ,@args)))
+      `(add-hook 'after-frame-hook (lambda () ,@body))
+    `(progn ,@body)))
 
 (defun load-face (face)
   "Recursively define FACE so its theme attributes can be queried."
@@ -384,22 +384,21 @@
 
 (defun display-page-breaks-as-lines ()
   "Configure font-lock to display lines with only a page break as a line."
-  (font-lock-add-keywords
-   nil
-   `(("^\f$"
-      0
-      (prog1 'shadow
-        (let ((line (make-overlay (match-beginning 0) (match-end 0))))
-          (overlay-put line 'display (make-string fill-column ?─))
-          (dolist (prop '(modification-hooks
-                          insert-in-front-hooks
-                          insert-behind-hooks))
-            (overlay-put line prop
-                         '((lambda (overlay &rest _)
-                             (delete-overlay overlay)))))))
-      t))))
-
-(add-hook 'after-change-major-mode-hook #'display-page-breaks-as-lines)
+  (if font-lock-defaults
+      (font-lock-add-keywords
+       nil
+       '(("^\f$"
+          0
+          (prog1 'shadow
+            (let ((line (make-overlay (match-beginning 0) (match-end 0))))
+              (overlay-put line 'display (make-string fill-column ?─))
+              (dolist (prop '(modification-hooks
+                              insert-in-front-hooks
+                              insert-behind-hooks))
+                (overlay-put line prop
+                             '((lambda (overlay &rest _)
+                                 (delete-overlay overlay)))))))
+          t)))))
 
 
 ;;; Inline annotations
@@ -705,16 +704,21 @@
               overlay)
             '((name . flyspell-correct-with-tab)))
 
+(defun enable-flyspell-after-locals ()
+  "Enable `flyspell-mode' if not read-only."
+  (unless buffer-read-only
+    (if (derived-mode-p 'prog-mode)
+        (flyspell-prog-mode)
+      (flyspell-mode))))
+
 (defun enable-flyspell ()
   "Enable `flyspell-mode' if buffer can be modified."
-  (unless buffer-read-only (flyspell-mode)))
-
-(defun enable-flyspell-prog ()
-  "Enable `flyspell-prog-mode' if buffer can be modified."
-  (unless buffer-read-only (flyspell-prog-mode)))
+  (add-hook 'hack-local-variables-hook
+            #'enable-flyspell-after-locals
+            nil t))
 
 (add-hook 'text-mode-hook #'enable-flyspell)
-(add-hook 'prog-mode-hook #'enable-flyspell-prog)
+(add-hook 'prog-mode-hook #'enable-flyspell)
 
 
 ;;; Tramp
@@ -1089,6 +1093,7 @@
 (defun setup-eglot ()
   "Enable eglot and its dependencies."
   (yas-minor-mode)
+  (require 'eglot)
   (add-hook 'hack-local-variables-hook #'eglot-ensure nil t))
 
 
@@ -1296,8 +1301,8 @@ REGION-FUNCTION will be used for buffer formatting."
 (setq elisp-flymake-byte-compile-load-path
       (append elisp-flymake-byte-compile-load-path load-path))
 
+(add-hook 'emacs-lisp-mode-hook #'display-page-breaks-as-lines)
 (add-hook 'emacs-lisp-mode-hook #'enable-flymake)
-
 (add-hook 'emacs-lisp-mode-hook #'format-on-save-mode)
 
 (advice-add 'elisp--company-doc-buffer :around
@@ -1513,7 +1518,7 @@ REGION-FUNCTION will be used for buffer formatting."
                       #'markdown-update-header-faces nil t))
           (markdown-display-inline-images))
         (when (eq major-mode 'org-mode)
-          (unless (and (boundp org-indent-mode)
+          (unless (and (boundp 'org-indent-mode)
                        org-indent-mode)
             (org-indent-mode)
             (add-hook 'presentation-mode--exit-hook
@@ -1523,7 +1528,7 @@ REGION-FUNCTION will be used for buffer formatting."
     (let ((inhibit-redisplay t))
       (widen)
       (text-scale-set 0)
-      (run-hooks 'presentation-mode-exit-hook)
+      (run-hooks 'presentation-mode--exit-hook)
       (setq presentation-mode--exit-hook nil))))
 
 
