@@ -167,7 +167,8 @@
 
 ;;; Save minibuffer history
 
-(savehist-mode)
+(when (daemonp)
+  (savehist-mode))
 
 
 ;;; Increase undo history
