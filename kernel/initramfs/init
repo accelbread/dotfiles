@@ -1,0 +1,27 @@
+#!/bin/busybox sh
+
+rescue_shell() {
+    echo "$@"
+    echo "Dropping you to a shell."
+    busybox --install -s
+    exec /bin/sh
+}
+
+mount_root() {
+    btrfs device scan /dev/nvme0n1p2 /dev/nvme1n1p2
+    mount /mnt/root
+}
+
+mount -t proc none /proc
+mount -t sysfs none /sys
+mount -t devtmpfs none /dev
+
+mount_root || rescue_shell "Error mounting root"
+
+[ -f /mnt/root/rescue_shell ] && rescue_shell "Found /rescue_shell"
+
+umount /proc
+umount /sys
+umount /dev
+
+exec switch_root /mnt/root /sbin/init

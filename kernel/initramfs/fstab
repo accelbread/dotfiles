@@ -1,0 +1,1 @@
+/dev/nvme0n1p2 /mnt/root btrfs ro,subvol=/solace/@root,ssd,compress=zstd,autodefrag,noatime 0 0

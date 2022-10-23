@@ -1,0 +1,39 @@
+dir /proc      755 0 0
+dir /sys       755 0 0
+dir /dev       755 0 0
+dir /bin       755 0 0
+dir /sbin      755 0 0
+dir /lib64     755 0 0
+dir /etc       755 0 0
+dir /mnt       755 0 0
+dir /mnt/root  755 0 0
+
+nod /dev/console 0600 0 0 c 5 1
+
+file /bin/busybox                /bin/busybox                755 0 0
+file /etc/fstab                  /usr/src/initramfs/fstab    755 0 0
+file /init                       /usr/src/initramfs/init     755 0 0
+file /lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 755 0 0
+
+file /sbin/fsck               /sbin/fsck               755 0 0
+file /sbin/btrfs              /sbin/btrfs              755 0 0
+file /sbin/btrfs-find-root    /sbin/btrfs-find-root    755 0 0
+file /sbin/btrfs-image        /sbin/btrfs-image        755 0 0
+file /sbin/btrfs-map-logical  /sbin/btrfs-map-logical  755 0 0
+file /sbin/btrfs-select-super /sbin/btrfs-select-super 755 0 0
+file /sbin/btrfsck            /sbin/btrfsck            755 0 0
+file /sbin/btrfstune          /sbin/btrfstune          755 0 0
+file /sbin/fsck.btrfs         /sbin/fsck.btrfs         755 0 0
+file /sbin/mkfs.btrfs         /sbin/mkfs.btrfs         755 0 0
+
+file /lib64/libblkid.so.1     /lib64/libblkid.so.1     755 0 0
+file /lib64/libc.so.6         /lib64/libc.so.6         755 0 0
+file /lib64/liblzo2.so.2      /lib64/liblzo2.so.2      755 0 0
+file /lib64/libmount.so.1     /lib64/libmount.so.1     755 0 0
+file /lib64/libpthread.so.0   /lib64/libpthread.so.0   755 0 0
+file /lib64/libresolv.so.2    /lib64/libresolv.so.2    775 0 0
+file /lib64/librt.so.1        /lib64/librt.so.1        755 0 0
+file /lib64/libudev.so.1      /lib64/libudev.so.1      755 0 0
+file /lib64/libuuid.so.1      /lib64/libuuid.so.1      755 0 0
+file /lib64/libz.so.1         /lib64/libz.so.1         755 0 0
+file /lib64/libzstd.so.1      /lib64/libzstd.so.1      755 0 0
